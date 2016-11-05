@@ -7,6 +7,7 @@ using System.Linq;
 using Microsoft.Xna.Framework.Content;
 using MonoGame.Extended.Shapes;
 using MonoGame.Extended.NuclexGui.Controls;
+using MonoGame.Extended.NuclexGui.Visuals.Flat.Renderers;
 using MonoGame.Extended.Support.Plugins;
 using PCLStorage;
 
@@ -151,7 +152,6 @@ namespace MonoGame.Extended.NuclexGui.Visuals.Flat
             /// <returns>True if the type can be employed</returns>
             public override bool CanEmploy(Type type)
             {
-
                 // If the type doesn't implement the IFlatcontrolRenderer interface, there's
                 // no chance that it will implement one of the generic control drawers
                 if (!typeof(IFlatControlRenderer).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
@@ -228,15 +228,14 @@ namespace MonoGame.Extended.NuclexGui.Visuals.Flat
                             else { // No, this is the first renderer we found for this control type
 
                                 // Type of the downcast adapter we need to bring to life
-                                Type adapterType = typeof(ControlRendererAdapter<>).MakeGenericType(controlType[0]);
-                                // Look up the constructor of the downcast adapter
-                                ConstructorInfo adapterConstructor = adapterType.GetTypeInfo().DeclaredConstructors.First(c => c.GetGenericArguments() == implementedInterface.GenericTypeArguments );
+                                var adapterType = typeof(ControlRendererAdapter<>).MakeGenericType(controlType[0]);
+                                var adapterConstructor = adapterType.GetTypeInfo().DeclaredConstructors.FirstOrDefault();
+                                //// Look up the constructor of the downcast adapter
+                                //ConstructorInfo adapterConstructor = adapterType.GetTypeInfo().DeclaredConstructors.First(c => c.GetGenericArguments() == implementedInterface.GenericTypeArguments );
 
-                                // Now use that constructor to create an instance
-                                object adapterInstance = adapterConstructor.Invoke(
-                                  new object[] { Activator.CreateInstance(type) }
-                                );
-
+                                //// Now use that constructor to create an instance
+                                var adapterInstance = adapterConstructor.Invoke(new[] { Activator.CreateInstance(type) });
+                                
                                 // Employ the new adapter and thereby the control renderer it adapts
                                 _renderers.Add(controlType[0], (IControlRendererAdapter)adapterInstance);
 
@@ -339,7 +338,8 @@ namespace MonoGame.Extended.NuclexGui.Visuals.Flat
 
             using (Stream skinStream = assembly.GetManifestResourceStream(skinJsonFile))
             {
-                ContentManager contentManager = new ContentManager(serviceProvider, Path.GetDirectoryName(resources.First(s => s == skinJsonFile)));
+                var rootDirectory = Path.GetDirectoryName(resources.First(s => s == skinJsonFile));
+                ContentManager contentManager = new ContentManager(serviceProvider, "Content");
 
                 try
                 {
@@ -442,7 +442,8 @@ namespace MonoGame.Extended.NuclexGui.Visuals.Flat
             {
                 renderer.Render(controlToRender, _flatGuiGraphics);
             }
-            else { // No renderer found, output a warning
+            else
+            { // No renderer found, output a warning
 #if WINDOWS
         Trace.WriteLine(
           string.Format(

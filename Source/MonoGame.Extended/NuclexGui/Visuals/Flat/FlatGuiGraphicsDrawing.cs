@@ -99,6 +99,7 @@ namespace MonoGame.Extended.NuclexGui.Visuals.Flat
             for (int index = 0; index < frame.Regions.Length; ++index)
             {
                 Rectangle destinationRegion = calculateDestinationRectangle(ref bounds, ref frame.Regions[index].DestinationRegion);
+                //Rectangle destinationRegion = new Rectangle(0, 0, 50, 50);
 
                 _spriteBatch.Draw(frame.Regions[index].Texture, destinationRegion, frame.Regions[index].SourceRegion, Color.White);
             }
@@ -112,10 +113,14 @@ namespace MonoGame.Extended.NuclexGui.Visuals.Flat
         {
             Frame frame = lookupFrame(frameName);
 
-            // Draw the text in all anchor locations defined by the skin
-            for (int index = 0; index < frame.Texts.Length; ++index)
+            if (frame.Texts != null)
             {
-                _spriteBatch.DrawString(frame.Texts[index].Font, text, positionText(ref frame.Texts[index], bounds, text), frame.Texts[index].Color);
+                // Draw the text in all anchor locations defined by the skin
+                for (int index = 0; index < frame.Texts.Length; ++index)
+                {
+                    _spriteBatch.DrawString(frame.Texts[index].Font, text,
+                        positionText(ref frame.Texts[index], bounds, text), frame.Texts[index].Color);
+                }
             }
         }
 

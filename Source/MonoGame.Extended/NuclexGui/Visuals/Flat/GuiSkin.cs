@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Newtonsoft.Json;
-using MonoGame.Extended.Serialization;
 
 namespace MonoGame.Extended.NuclexGui.Visuals.Flat
 {
@@ -57,12 +55,19 @@ namespace MonoGame.Extended.NuclexGui.Visuals.Flat
             public string Id;
             /// <summary>Texture the picture region is taken from</summary>
             public Texture2D Texture;
+
             /// <summary>Area within the texture containing the picture region</summary>
-            public Rectangle SourceRegion;
+            public Rectangle SourceRegion;// => new Rectangle(x, y, w, h);
+
             /// <summary>Location in the frame where the picture region will be drawn</summary>
             public UniRectangle DestinationRegion;
             /// <summary>Name of the texture the picture region is taken from</summary>
             public string Source;
+
+            public int x { get; set; }
+            public int y { get; set; }
+            public int w { get; set; }
+            public int h { get; set; }
         }
 
         /// <summary>Describes where within the frame text should be drawn</summary>
@@ -85,10 +90,11 @@ namespace MonoGame.Extended.NuclexGui.Visuals.Flat
         public string Name;
 
         /// <summary>Regions that need to be drawn to render the frame</summary>
-        public Region[] Regions;
+        [JsonProperty("region")]
+        public Region[] Regions { get; set; }
 
         /// <summary>Locations where text can be drawn into the frame</summary>
-        public Text[] Texts;
+        public Text[] Texts { get; set; }
 
         /// <summary>Initializes a new frame</summary>
         /// <param name="regions">Regions needed to be drawn to render the frame</param>
@@ -126,6 +132,7 @@ namespace MonoGame.Extended.NuclexGui.Visuals.Flat
         public GuiSkin()
         {
             frames = new List<Frame>();
+            resources = new Resources();
             resources.bitmap = new List<Resources.Bitmap>();
             resources.font = new List<Resources.Font>();
         }

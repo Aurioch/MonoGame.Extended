@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using MonoGame.Extended.NuclexGui.Input;
-
 using XnaEventHandler = System.EventHandler<System.EventArgs>;
 
 namespace MonoGame.Extended.InputListeners
@@ -85,7 +80,7 @@ namespace MonoGame.Extended.InputListeners
             if (services != null)
             {
                 _gameServices = services;
-                _gameServices.AddService(typeof(IInputService), this);
+                _gameServices.AddService(typeof(NuclexGui.Input.IInputService), this);
             }
         }
 

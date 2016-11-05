@@ -3,8 +3,12 @@
 namespace MonoGame.Extended.NuclexGui.Visuals.Flat.Renderers
 {
     /// <summary>Renders button controls in a traditional flat style</summary>
-    class FlatButtonControlRenderer : IFlatControlRenderer<Controls.Desktop.GuiButtonControl>
+    public class FlatButtonControlRenderer : IFlatControlRenderer<Controls.Desktop.GuiButtonControl>
     {
+        public FlatButtonControlRenderer()
+        {
+        }
+
         /// <summary>
         ///   Renders the specified control using the provided graphics interface
         /// </summary>
