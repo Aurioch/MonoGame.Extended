@@ -35,13 +35,11 @@ namespace Demo.NuclexGui
         protected override void Initialize()
         {
             base.Initialize();
-
-            _gui.Initialize();
-
-            var guiScreen = new GuiScreen(800, 480);
-            _gui.Screen = guiScreen;
+            
+            _gui.Screen = new GuiScreen(800, 480);
             _gui.Screen.Desktop.Bounds = new UniRectangle(new UniScalar(0f, 0), new UniScalar(0f, 0), new UniScalar(1f, 0), new UniScalar(1f, 0));
 
+            _gui.Initialize();
 
             GuiButtonControl button = new GuiButtonControl
             {
@@ -50,7 +48,7 @@ namespace Demo.NuclexGui
                     new UniRectangle(new UniScalar(0.5f, -100), new UniScalar(0.5f, -50), new UniScalar(0f, 150), new UniScalar(0f, 50)),
                 Text = "Hello"
             };
-            guiScreen.Desktop.Children.Add(button);
+            _gui.Screen.Desktop.Children.Add(button);
         }
 
         protected override void LoadContent()
