@@ -6,8 +6,9 @@ using MonoGame.Extended.Entities.Components;
 
 namespace MonoGame.Extended.Entities
 {
-    public class Entity : Transform2D<Entity>//, IEquatable<Entity>
+    public class Entity : Transform2D<Entity>
     {
+        private readonly List<EntityComponent> _components;
         private readonly EntityComponentSystem _entityComponentSystem;
 
         public Entity(EntityComponentSystem entityComponentSystem, long id, string name)
@@ -24,39 +25,7 @@ namespace MonoGame.Extended.Entities
 
         public long Id { get; }
         public string Name { get; }
-
-        private readonly List<EntityComponent> _components;
-
-        //public static bool operator ==(Entity a, Entity b)
-        //{
-        //    if (ReferenceEquals(a, null)) return false;
-        //    if (ReferenceEquals(b, null)) return false;
-        //    return a.Id == b.Id;
-        //}
-
-        //public static bool operator !=(Entity a, Entity b)
-        //{
-        //    if (ReferenceEquals(a, null)) return false;
-        //    if (ReferenceEquals(b, null)) return false;
-        //    return a.Id != b.Id;
-        //}
-
-        //public bool Equals(Entity other)
-        //{
-        //    if (ReferenceEquals(other, null)) return false;
-        //    return Id == other.Id;
-        //}
-
-        //public override bool Equals(object obj)
-        //{
-        //    var other = obj as Entity;
-        //    return !ReferenceEquals(other, null) && Equals(other);
-        //}
-
-        //public override int GetHashCode()
-        //{
-        //    return Id.GetHashCode();
-        //}
+        public object Tag { get; set; }
 
         public override string ToString()
         {

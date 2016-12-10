@@ -1,14 +1,14 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Microsoft.Xna.Framework;
 
 namespace MonoGame.Extended.BitmapFonts
 {
     public class BitmapFont
     {
-        internal BitmapFont(string name, IEnumerable<BitmapFontRegion> regions, int lineHeight)
+        private readonly Dictionary<int, BitmapFontRegion> _characterMap;
+
+        public BitmapFont(string name, IEnumerable<BitmapFontRegion> regions, int lineHeight)
         {
             _characterMap = regions.ToDictionary(r => r.Character);
 
@@ -16,10 +16,8 @@ namespace MonoGame.Extended.BitmapFonts
             LineHeight = lineHeight;
         }
 
-        private readonly Dictionary<int, BitmapFontRegion> _characterMap;
-
         public string Name { get; }
-        public int LineHeight { get; private set; }
+        public int LineHeight { get; }
         public int LetterSpacing { get; set; } = 0;
 
         public BitmapFontRegion GetCharacterRegion(int character)
@@ -28,66 +26,55 @@ namespace MonoGame.Extended.BitmapFonts
             return _characterMap.TryGetValue(character, out region) ? region : null;
         }
 
-        internal static IEnumerable<int> GetUnicodeCodePoints(string s)
+        public static int GetUnicodeCodePoint(string s, int index)
         {
-            if (!string.IsNullOrEmpty(s))
-            {
-                for (int i = 0; i < s.Length; i += 1)
-                {
-                    if (char.IsLowSurrogate(s, i))
-                        continue;
-
-                    yield return char.ConvertToUtf32(s, i);
-                }
-            }
-        }
-
-        public Size GetSize(string text)
-        {
-            var width = 0;
-            var height = 0;
-            var codePoints = GetUnicodeCodePoints(text).ToArray();
-
-            for (int i = 0, l = codePoints.Length; i < l; i++)
-            {
-                BitmapFontRegion fontRegion;
-                var c = codePoints[i];
-
-                if (_characterMap.TryGetValue(c, out fontRegion))
-                {
-                    if (i != text.Length - 1)
-                        width += fontRegion.XAdvance + LetterSpacing;
-                    else
-                        width += fontRegion.XOffset + fontRegion.Width;
-
-                    if (fontRegion.Height + fontRegion.YOffset > height)
-                        height = fontRegion.Height + fontRegion.YOffset;
-                }
-            }
-
-            return new Size(width, height);
+            return char.IsLowSurrogate(s, index) ? 0 : char.ConvertToUtf32(s, index);
         }
 
         public Size MeasureString(string text)
         {
-            if (text == null) throw new ArgumentNullException(nameof(text));
+            if (string.IsNullOrEmpty(text))
+                return Size.Empty;
 
-            var size = GetSize(text);
-            return size;
-        }
-
-        public Size MeasureString(StringBuilder stringBuilder)
-        {
-            if (stringBuilder == null) throw new ArgumentNullException(nameof(stringBuilder));
-
-            return MeasureString(stringBuilder.ToString());
+            var stringRectangle = GetStringRectangle(text, Point.Zero);
+            return new Size(stringRectangle.Width, stringRectangle.Height);
         }
 
         public Rectangle GetStringRectangle(string text, Vector2 position)
         {
-            var size = GetSize(text);
-            var p = position.ToPoint();
-            return new Rectangle(p.X, p.Y, size.Width, size.Height);
+            return GetStringRectangle(text, position.ToPoint());
+        }
+
+        public Rectangle GetStringRectangle(string text, Point position)
+        {
+            var dx = position.X;
+            var dy = position.Y;
+            var rectangle = new Rectangle(dx, dy, 0, LineHeight);
+
+            for (var i = 0; i < text.Length; i++)
+            {
+                var character = GetUnicodeCodePoint(text, i);
+                var fontRegion = GetCharacterRegion(character);
+
+                if (fontRegion != null)
+                {
+                    var characterPosition = new Point(dx + fontRegion.XOffset, dy + fontRegion.YOffset);
+                    var right = characterPosition.X + fontRegion.Width;
+
+                    if (right > rectangle.Right)
+                        rectangle.Width = right - rectangle.Left;
+
+                    dx += fontRegion.XAdvance + LetterSpacing;
+                }
+
+                if (character == '\n')
+                {
+                    rectangle.Height += LineHeight;
+                    dx = position.X;
+                }
+            }
+
+            return rectangle;
         }
 
         public override string ToString()

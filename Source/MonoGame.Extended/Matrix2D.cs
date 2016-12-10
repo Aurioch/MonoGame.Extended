@@ -32,7 +32,7 @@ namespace MonoGame.Extended
     ///         value of <code>1.0f</code>.
     ///     </para>
     /// </remarks>
-    [DebuggerDisplay(value: "{DebugDisplayString,nq}")]
+    [DebuggerDisplay("{DebugDisplayString,nq}")]
     public struct Matrix2D : IEquatable<Matrix2D>, IEquatableByRef<Matrix2D>
     {
         public float M11; // x scale, also used for rotation
@@ -50,7 +50,7 @@ namespace MonoGame.Extended
         /// <value>
         ///     The identity matrix.
         /// </value>
-        public static Matrix2D Identity { get; } = new Matrix2D(m11: 1f, m12: 0f, m21: 0f, m22: 1f, m31: 0f, m32: 0f);
+        public static Matrix2D Identity { get; } = new Matrix2D(1f, 0f, 0f, 1f, 0f, 0f);
 
         /// <summary>
         ///     Gets the translation.
@@ -59,10 +59,7 @@ namespace MonoGame.Extended
         ///     The translation.
         /// </value>
         /// <remarks>The <see cref="Translation" /> is equal to the vector <code>(M31, M32)</code>.</remarks>
-        public Vector2 Translation
-        {
-            get { return new Vector2(M31, M32); }
-        }
+        public Vector2 Translation => new Vector2(M31, M32);
 
         /// <summary>
         ///     Gets the rotation angle in radians.
@@ -73,10 +70,7 @@ namespace MonoGame.Extended
         /// <remarks>
         ///     The <see cref="Rotation" /> is equal to <code>Atan2(M21, M11)</code>.
         /// </remarks>
-        public float Rotation
-        {
-            get { return (float)Math.Atan2(M21, M11); }
-        }
+        public float Rotation => (float)Math.Atan2(M21, M11);
 
         /// <summary>
         ///     Gets the scale.
@@ -92,8 +86,8 @@ namespace MonoGame.Extended
         {
             get
             {
-                var scaleX = (float)Math.Sqrt(d: M11 * M11 + M21 * M21);
-                var scaleY = (float)Math.Sqrt(d: M12 * M12 + M22 * M22);
+                var scaleX = (float)Math.Sqrt(M11 * M11 + M21 * M21);
+                var scaleY = (float)Math.Sqrt(M12 * M12 + M22 * M22);
                 return new Vector2(scaleX, scaleY);
             }
         }
@@ -149,6 +143,79 @@ namespace MonoGame.Extended
         {
             result.X = vector.X * M11 + vector.Y * M21 + M31;
             result.Y = vector.X * M12 + vector.Y * M22 + M32;
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Matrix2D" /> struct that can be used to translate, rotate, and scale a set of vertices in two dimensions.
+        /// </summary>
+        /// <param name="position">The amounts to translate by on the x and y axes.</param>
+        /// <param name="rotation">The amount, in radians, in which to rotate around the z-axis.</param>
+        /// <param name="scale">The amount to scale by on the x and y axes.</param>
+        /// <param name="origin">The point which to rotate and scale around.</param>
+        /// <param name="transformMatrix">The resulting <see cref="Matrix2D" /></param>
+        public static void CreateFrom(Vector2 position, float rotation, Vector2? scale, Vector2? origin,
+            out Matrix2D transformMatrix)
+        {
+            transformMatrix = Identity;
+
+            if (origin.HasValue)
+            {
+                transformMatrix.M31 = -origin.Value.X;
+                transformMatrix.M32 = -origin.Value.Y;
+            }
+
+            if (scale.HasValue)
+            {
+                var scaleMatrix = CreateScale(scale.Value);
+                Multiply(ref transformMatrix, ref scaleMatrix, out transformMatrix);
+            }
+
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (rotation != 0f)
+            {
+                var rotationMatrix = CreateRotationZ(-rotation);
+                Multiply(ref transformMatrix, ref rotationMatrix, out transformMatrix);
+            }
+
+            var translationMatrix = CreateTranslation(position);
+            Multiply(ref transformMatrix, ref translationMatrix, out transformMatrix);
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Matrix2D" /> struct that can be used to translate, rotate, and scale a set of vertices in two dimensions.
+        /// </summary>
+        /// <param name="position">The amounts to translate by on the x and y axes.</param>
+        /// <param name="rotation">The amount, in radians, in which to rotate around the z-axis.</param>
+        /// <param name="scale">The amount to scale by on the x and y axes.</param>
+        /// <param name="origin">The point which to rotate and scale around.</param>
+        /// <returns>The resulting <see cref="Matrix2D" />.</returns>
+        public static Matrix2D CreateFrom(Vector2 position, float rotation, Vector2? scale = null, Vector2? origin = null)
+        {
+            var transformMatrix = Identity;
+
+            if (origin.HasValue)
+            {
+                transformMatrix.M31 = -origin.Value.X;
+                transformMatrix.M32 = -origin.Value.Y;
+            }
+
+            if (scale.HasValue)
+            {
+                var scaleMatrix = CreateScale(scale.Value);
+                transformMatrix = Multiply(transformMatrix, scaleMatrix);
+            }
+
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (rotation != 0f)
+            {
+                var rotationMatrix = CreateRotationZ(-rotation);
+                transformMatrix = Multiply(transformMatrix, rotationMatrix);
+            }
+
+            var translationMatrix = CreateTranslation(position);
+            transformMatrix = Multiply(transformMatrix, translationMatrix);
+
+            return transformMatrix;
         }
 
         /// <summary>
@@ -789,7 +856,8 @@ namespace MonoGame.Extended
         /// <returns><c>true</c> if the <see cref="Matrix2D" />s are equal; <c>false</c> otherwise.</returns>
         public static bool operator ==(Matrix2D matrix1, Matrix2D matrix2)
         {
-            return (matrix1.M11 == matrix2.M11) && (matrix1.M12 == matrix2.M12) && (matrix1.M21 == matrix2.M21) && (matrix1.M22 == matrix2.M22) && (matrix1.M31 == matrix2.M31) && (matrix1.M32 == matrix2.M32);
+            return (matrix1.M11 == matrix2.M11) && (matrix1.M12 == matrix2.M12) && (matrix1.M21 == matrix2.M21) &&
+                   (matrix1.M22 == matrix2.M22) && (matrix1.M31 == matrix2.M31) && (matrix1.M32 == matrix2.M32);
         }
 
         /// <summary>
@@ -800,7 +868,8 @@ namespace MonoGame.Extended
         /// <returns><c>true</c> if the <see cref="Matrix2D" />s are not equal; <c>false</c> otherwise.</returns>
         public static bool operator !=(Matrix2D matrix1, Matrix2D matrix2)
         {
-            return (matrix1.M11 != matrix2.M11) || (matrix1.M12 != matrix2.M12) || (matrix1.M21 != matrix2.M21) || (matrix1.M22 != matrix2.M22) || (matrix1.M31 != matrix2.M31) || (matrix1.M32 != matrix2.M32);
+            return (matrix1.M11 != matrix2.M11) || (matrix1.M12 != matrix2.M12) || (matrix1.M21 != matrix2.M21) ||
+                   (matrix1.M22 != matrix2.M22) || (matrix1.M31 != matrix2.M31) || (matrix1.M32 != matrix2.M32);
         }
 
         /// <summary>
@@ -814,7 +883,8 @@ namespace MonoGame.Extended
         /// </returns>
         public bool Equals(ref Matrix2D matrix)
         {
-            return (M11 == matrix.M11) && (M12 == matrix.M12) && (M21 == matrix.M21) && (M22 == matrix.M22) && (M31 == matrix.M31) && (M32 == matrix.M32);
+            return (M11 == matrix.M11) && (M12 == matrix.M12) && (M21 == matrix.M21) && (M22 == matrix.M22) &&
+                   (M31 == matrix.M31) && (M32 == matrix.M32);
         }
 
         /// <summary>
@@ -841,7 +911,7 @@ namespace MonoGame.Extended
         /// </returns>
         public override bool Equals(object obj)
         {
-            return obj is Matrix2D && Equals(matrix: (Matrix2D)obj);
+            return obj is Matrix2D && Equals((Matrix2D)obj);
         }
 
         /// <summary>
@@ -854,7 +924,8 @@ namespace MonoGame.Extended
         public override int GetHashCode()
         {
             // ReSharper disable NonReadonlyMemberInGetHashCode
-            return M11.GetHashCode() + M12.GetHashCode() + M21.GetHashCode() + M22.GetHashCode() + M31.GetHashCode() + M32.GetHashCode();
+            return M11.GetHashCode() + M12.GetHashCode() + M21.GetHashCode() + M22.GetHashCode() + M31.GetHashCode() +
+                   M32.GetHashCode();
             // ReSharper restore NonReadonlyMemberInGetHashCode
         }
 
@@ -867,7 +938,49 @@ namespace MonoGame.Extended
         /// </returns>
         public static implicit operator Matrix(Matrix2D matrix)
         {
-            return new Matrix(matrix.M11, matrix.M12, m13: 0, m14: 0, m21: matrix.M21, m22: matrix.M22, m23: 0, m24: 0, m31: 0, m32: 0, m33: 1, m34: 0, m41: matrix.M31, m42: matrix.M32, m43: 0, m44: 1);
+            return new Matrix(matrix.M11, matrix.M12, 0, 0, matrix.M21, matrix.M22, 0, 0, 0, 0, 1, 0, matrix.M31,
+                matrix.M32, 0, 1);
+        }
+
+        /// <summary>
+        ///     Performs an explicit conversion from a specified <see cref="Matrix2D" /> to a <see cref="Matrix" />.
+        /// </summary>
+        /// <param name="matrix">The <see cref="Matrix2D" />.</param>
+        /// <param name="depth">The depth value.</param>
+        /// <param name="result">The resulting <see cref="Matrix" />.</param>
+        public static void ToMatrix(ref Matrix2D matrix, float depth, out Matrix result)
+        {
+            result.M11 = matrix.M11;
+            result.M12 = matrix.M12;
+            result.M13 = 0;
+            result.M14 = 0;
+
+            result.M21 = matrix.M21;
+            result.M22 = matrix.M22;
+            result.M23 = 0;
+            result.M24 = 0;
+
+            result.M31 = 0;
+            result.M32 = 0;
+            result.M33 = 1;
+            result.M34 = 0;
+
+            result.M41 = matrix.M31;
+            result.M42 = matrix.M32;
+            result.M43 = depth;
+            result.M44 = 1;
+        }
+
+        /// <summary>
+        ///     Performs an explicit conversion from a specified <see cref="Matrix2D" /> to a <see cref="Matrix" />.
+        /// </summary>
+        /// <param name="depth">The depth value.</param>
+        /// <returns>The resulting <see cref="Matrix" />.</returns>
+        public Matrix ToMatrix(float depth = 0)
+        {
+            Matrix result;
+            ToMatrix(ref this, depth, out result);
+            return result;
         }
 
         /// <summary>
@@ -876,10 +989,10 @@ namespace MonoGame.Extended
         /// <value>
         ///     The debug display string.
         /// </value>
-        internal string DebugDisplayString
-        {
-            get { return this == Identity ? "Identity" : $"T:({Translation.X:0.##},{Translation.Y:0.##}), R:{MathHelper.ToDegrees(Rotation):0.##}°, S:({Scale.X:0.##},{Scale.Y:0.##})"; }
-        }
+        internal string DebugDisplayString => this == Identity
+                ? "Identity"
+                : $"T:({Translation.X:0.##},{Translation.Y:0.##}), R:{MathHelper.ToDegrees(Rotation):0.##}°, S:({Scale.X:0.##},{Scale.Y:0.##})"
+            ;
 
         /// <summary>
         ///     Returns a <see cref="string" /> that represents this <see cref="Matrix2D" />.

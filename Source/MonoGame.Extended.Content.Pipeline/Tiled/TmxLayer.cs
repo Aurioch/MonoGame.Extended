@@ -5,6 +5,7 @@ namespace MonoGame.Extended.Content.Pipeline.Tiled
 {
     [XmlInclude(typeof(TmxTileLayer))]
     [XmlInclude(typeof(TmxImageLayer))]
+    [XmlInclude(typeof(TmxObjectLayer))]
     public abstract class TmxLayer
     {
         protected TmxLayer()
@@ -27,7 +28,13 @@ namespace MonoGame.Extended.Content.Pipeline.Tiled
 
         [XmlAttribute(AttributeName = "visible")]
         public bool Visible { get; set; }
-        
+
+        [XmlAttribute(AttributeName = "offsetx")]
+        public float OffsetX { get; set; }
+
+        [XmlAttribute(AttributeName = "offsety")]
+        public float OffsetY { get; set; }
+
         [XmlArray("properties")]
         [XmlArrayItem("property")]
         public List<TmxProperty> Properties { get; set; }

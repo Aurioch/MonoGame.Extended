@@ -1,68 +1,63 @@
 ﻿using System;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.InputListeners;
-using MonoGame.Extended.InputListeners.Devices;
 
 namespace MonoGame.Extended.NuclexGui.Input
 {
     public class DefaultInputCapturer : IInputCapturer, IDisposable
     {
-        #region class DummyInputReceiver
+        private bool _disposedValue; // To detect redundant calls
+        private readonly GamePadListener _gamePadListener;
 
-        /// <summary>Dummy receiver for input events</summary>
-        private class DummyInputReceiver : IInputReceiver
+        /// <summary>Current receiver of input events</summary>
+        /// <remarks>
+        ///     Always valid. If no input receiver is assigned, this field will be set
+        ///     to a dummy receiver.
+        /// </remarks>
+        private IInputReceiver _inputReceiver;
+
+        /// <summary>Input service the capturer is currently subscribed to</summary>
+        private IGuiInputService _inputService;
+
+        private readonly KeyboardListener _keyboardListener;
+        private readonly MouseListener _mouseListener;
+        private TouchListener _touchListener;
+
+        /// <summary>Initializes a new input capturer, taking the input service from a service provider</summary>
+        /// <param name="serviceProvider">Service provider the input capturer will take the input service from</param>
+        public DefaultInputCapturer(IServiceProvider serviceProvider) : this(GetInputService(serviceProvider))
         {
-
-            /// <summary>Default instance of the dummy receiver</summary>
-            public static readonly DummyInputReceiver Default = new DummyInputReceiver();
-
-            /// <summary>Injects an input command into the input receiver</summary>
-            /// <param name="command">Input command to be injected</param>
-            public void InjectCommand(Command command) { }
-
-            /// <summary>Called when a button on the gamepad has been pressed</summary>
-            /// <param name="button">Button that has been pressed</param>
-            public void InjectButtonPress(Buttons button) { }
-
-            /// <summary>Called when a button on the gamepad has been released</summary>
-            /// <param name="button">Button that has been released</param>
-            public void InjectButtonRelease(Buttons button) { }
-
-            /// <summary>Injects a mouse position update into the receiver</summary>
-            /// <param name="x">New X coordinate of the mouse cursor on the screen</param>
-            /// <param name="y">New Y coordinate of the mouse cursor on the screen</param>
-            public void InjectMouseMove(float x, float y) { }
-
-            /// <summary>Called when a mouse button has been pressed down</summary>
-            /// <param name="button">Index of the button that has been pressed</param>
-            public void InjectMousePress(MouseButton button) { }
-
-            /// <summary>Called when a mouse button has been released again</summary>
-            /// <param name="button">Index of the button that has been released</param>
-            public void InjectMouseRelease(MouseButton button) { }
-
-            /// <summary>Called when the mouse wheel has been rotated</summary>
-            /// <param name="ticks">Number of ticks that the mouse wheel has been rotated</param>
-            public void InjectMouseWheel(float ticks) { }
-
-            /// <summary>Called when a key on the keyboard has been pressed down</summary>
-            /// <param name="keyCode">Code of the key that was pressed</param>
-            public void InjectKeyPress(Keys keyCode) { }
-
-            /// <summary>Called when a key on the keyboard has been released again</summary>
-            /// <param name="keyCode">Code of the key that was released</param>
-            public void InjectKeyRelease(Keys keyCode) { }
-
-            /// <summary>Handle user text input by a physical or virtual keyboard</summary>
-            /// <param name="character">Character that has been entered</param>
-            public void InjectCharacter(char character) { }
-
         }
 
-        #endregion // class DummyInputReceiver
+        /// <summary>Initializes a new input capturer using the specified input service</summary>
+        /// <param name="inputService">Input service the capturer will subscribe to</param>
+        public DefaultInputCapturer(IGuiInputService inputService)
+        {
+            _inputService = inputService;
+            _inputReceiver = new DummyInputReceiver();
 
-        #region Properties
+            _keyboardListener = inputService.KeyboardListener;
+            _mouseListener = inputService.MouseListener;
+            _gamePadListener = inputService.GamePadListener;
+            _touchListener = inputService.TouchListener;
+
+            SubscribeInputDevices();
+        }
+
+        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        // ~MainInputCapturer() {
+        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+        //   Dispose(false);
+        // }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // TODO: uncomment the following line if the finalizer is overridden above.
+            // GC.SuppressFinalize(this);
+        }
 
         /// <summary>Input receiver any captured input will be sent to</summary>
         public IInputReceiver InputReceiver
@@ -71,8 +66,7 @@ namespace MonoGame.Extended.NuclexGui.Input
             {
                 if (ReferenceEquals(_inputReceiver, DummyInputReceiver.Default))
                     return null;
-                else
-                    return _inputReceiver;
+                return _inputReceiver;
             }
             set
             {
@@ -83,284 +77,195 @@ namespace MonoGame.Extended.NuclexGui.Input
             }
         }
 
-        #endregion
-
-        #region Fields
-
-        /// <summary>Player index this input capturer is working with</summary>
-        private ExtendedPlayerIndex _playerIndex;
-
-        /// <summary>Current receiver of input events</summary>
-        /// <remarks>
-        ///   Always valid. If no input receiver is assigned, this field will be set
-        ///   to a dummy receiver.
-        /// </remarks>
-        private IInputReceiver _inputReceiver;
-
-        /// <summary>Input service the capturer is currently subscribed to</summary>
-        private InputListeners.IInputService _inputService;
-
-        /// <summary>Keyboard the input capturer is subscribed to</summary>
-        private IKeyboard _subscribedKeyboard;
-        /// <summary>Mouse the input capturer is subscribed to</summary>
-        private IMouse _subscribedMouse;
-        /// <summary>Game pad the input capturer is subscribed to</summary>
-        private IGamePad _subscribedGamePad;
-        /// <summary>Chat pad the input capturer is subscribed to</summary>
-        private IKeyboard _subscribedChatPad;
-
-        /// <summary>Delegate for the keyPressed() method</summary>
-        private KeyDelegate _keyPressedDelegate;
-        /// <summary>Delegate for the keyReleased() method</summary>
-        private KeyDelegate _keyReleasedDelegate;
-        /// <summary>Delegate for the characterEntered() method</summary>
-        private CharacterDelegate _characterEnteredDelegate;
-        /// <summary>Delegate for the mouseButtonPressed() method</summary>
-        private MouseButtonDelegate _mouseButtonPressedDelegate;
-        /// <summary>Delegate for the mouseButtonReleased() method</summary>
-        private MouseButtonDelegate _mouseButtonReleasedDelegate;
-        /// <summary>Delegate for the mouseMoved() method</summary>
-        private MouseMoveDelegate _mouseMovedDelegate;
-        /// <summary>Delegate for the mouseWheelRotated() method</summary>
-        private MouseWheelDelegate _mouseWheelRotatedDelegate;
-        /// <summary>Delegate for the buttonPressed() method</summary>
-        private GamePadButtonDelegate _buttonPressedDelegate;
-        /// <summary>Delegate for the buttonReleased() method</summary>
-        private GamePadButtonDelegate _buttonReleasedDelegate;
-
-        #endregion
-
-        #region Constructors
-
-        /// <summary>Initializes a new input capturer, taking the input service from a service provider</summary>
-        /// <param name="serviceProvider">Service provider the input capturer will take the input service from</param>
-        public DefaultInputCapturer(IServiceProvider serviceProvider) : this(getInputService(serviceProvider))
-        { }
-
-        /// <summary>Initializes a new input capturer using the specified input service</summary>
-        /// <param name="inputService">Input service the capturer will subscribe to</param>
-        public DefaultInputCapturer(InputListeners.IInputService inputService)
+        protected virtual void Dispose(bool disposing)
         {
-            _inputService = inputService;
-            _inputReceiver = new DummyInputReceiver();
-            _playerIndex = ExtendedPlayerIndex.One;
-
-            _keyPressedDelegate = new KeyDelegate(keyPressed);
-            _keyReleasedDelegate = new KeyDelegate(keyReleased);
-            _characterEnteredDelegate = new CharacterDelegate(characterEntered);
-            _mouseButtonPressedDelegate = new MouseButtonDelegate(mouseButtonPressed);
-            _mouseButtonReleasedDelegate = new MouseButtonDelegate(mouseButtonReleased);
-            _mouseMovedDelegate = new MouseMoveDelegate(mouseMoved);
-            _mouseWheelRotatedDelegate = new MouseWheelDelegate(mouseWheelRotated);
-            _buttonPressedDelegate = new GamePadButtonDelegate(buttonPressed);
-            _buttonReleasedDelegate = new GamePadButtonDelegate(buttonReleased);
-
-            subscribeInputDevices();
-        }
-
-        #endregion
-
-        #region Methods
-
-        /// <summary>Immediately releases all resources owned by the instance</summary>
-        public void Dispose()
-        {
-            if (_inputService != null)
+            if (!_disposedValue)
             {
-                unsubscribeInputDevices();
-                _inputService = null;
+                if (disposing)
+                    if (_inputService != null)
+                    {
+                        UnsubscribeInputDevices();
+                        _inputService = null;
+                    }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+                // TODO: set large fields to null.
+
+                _disposedValue = true;
             }
         }
 
-        /// <summary>Changes the controller which can interact with the GUI</summary>
-        /// <param name="playerIndex">
-        ///   Index of the player whose controller will be allowed to interact with the GUI
-        /// </param>
-        public void ChangePlayerIndex(PlayerIndex playerIndex)
+        private void SubscribeInputDevices()
         {
-            ChangePlayerIndex((ExtendedPlayerIndex)playerIndex);
+            _keyboardListener.KeyPressed += _keyboardListener_KeyPressed;
+            _keyboardListener.KeyReleased += _keyboardListener_KeyReleased;
+            _keyboardListener.KeyTyped += _keyboardListener_KeyTyped;
+
+            _mouseListener.MouseDown += _mouseListener_MouseDown;
+            _mouseListener.MouseUp += _mouseListener_MouseUp;
+            _mouseListener.MouseMoved += _mouseListener_MouseMoved;
+            _mouseListener.MouseWheelMoved += _mouseListener_MouseWheelMoved;
+
+            _gamePadListener.ButtonDown += _gamePadListener_ButtonDown;
+            _gamePadListener.ButtonUp += _gamePadListener_ButtonUp;
         }
 
-        /// <summary>Changes the controller which can interact with the GUI</summary>
-        /// <param name="playerIndex">
-        ///   Index of the player whose controller will be allowed to interact with the GUI
-        /// </param>
-        public void ChangePlayerIndex(ExtendedPlayerIndex playerIndex)
+        private void UnsubscribeInputDevices()
         {
-            unsubscribePlayerSpecificInputDevices();
-            _playerIndex = playerIndex;
-            subscribePlayerSpecificDevices();
+            _keyboardListener.KeyPressed -= _keyboardListener_KeyPressed;
+            _keyboardListener.KeyReleased -= _keyboardListener_KeyReleased;
+            _keyboardListener.KeyTyped -= _keyboardListener_KeyTyped;
+
+            _mouseListener.MouseDown -= _mouseListener_MouseDown;
+            _mouseListener.MouseUp -= _mouseListener_MouseUp;
+            _mouseListener.MouseMoved -= _mouseListener_MouseMoved;
+            _mouseListener.MouseWheelMoved -= _mouseListener_MouseWheelMoved;
+
+            _gamePadListener.ButtonDown -= _gamePadListener_ButtonDown;
+            _gamePadListener.ButtonUp -= _gamePadListener_ButtonUp;
         }
 
-        /// <summary>Subscribes to the events of all input devices</summary>
-        private void subscribeInputDevices()
+        private void _keyboardListener_KeyPressed(object sender, KeyboardEventArgs e)
         {
-            _subscribedKeyboard = _inputService.GetKeyboard();
-            _subscribedKeyboard.KeyPressed += _keyPressedDelegate;
-            _subscribedKeyboard.KeyReleased += _keyReleasedDelegate;
-            _subscribedKeyboard.CharacterEntered += _characterEnteredDelegate;
-
-            _subscribedMouse = _inputService.GetMouse();
-            _subscribedMouse.MouseButtonPressed += _mouseButtonPressedDelegate;
-            _subscribedMouse.MouseButtonReleased += _mouseButtonReleasedDelegate;
-            _subscribedMouse.MouseMoved += _mouseMovedDelegate;
-            _subscribedMouse.MouseWheelRotated += _mouseWheelRotatedDelegate;
-
-            subscribePlayerSpecificDevices();
+            _inputReceiver.InjectKeyPress(e.Key);
         }
 
-        /// <summary>Subscribes to the events of all player-specific input devices</summary>
-        private void subscribePlayerSpecificDevices()
+        private void _keyboardListener_KeyReleased(object sender, KeyboardEventArgs e)
         {
-            _subscribedGamePad = _inputService.GetGamePad(_playerIndex);
-            _subscribedGamePad.ButtonPressed += _buttonPressedDelegate;
-            _subscribedGamePad.ButtonReleased += _buttonReleasedDelegate;
-
-            if (_playerIndex < ExtendedPlayerIndex.Five)
-            {
-                var standardPlayerIndex = (PlayerIndex)_playerIndex;
-                _subscribedChatPad = _inputService.GetKeyboard(standardPlayerIndex);
-                _subscribedChatPad.KeyPressed += _keyPressedDelegate;
-                _subscribedChatPad.KeyReleased += _keyReleasedDelegate;
-                _subscribedChatPad.CharacterEntered += _characterEnteredDelegate;
-            }
+            _inputReceiver.InjectKeyRelease(e.Key);
         }
 
-        /// <summary>Unsubscribes from the events of all input devices</summary>
-        private void unsubscribeInputDevices()
+        private void _keyboardListener_KeyTyped(object sender, KeyboardEventArgs e)
         {
-            unsubscribePlayerSpecificInputDevices();
-
-            if (_subscribedKeyboard != null)
-            {
-                _subscribedKeyboard.CharacterEntered -= _characterEnteredDelegate;
-                _subscribedKeyboard.KeyReleased -= _keyReleasedDelegate;
-                _subscribedKeyboard.KeyPressed -= _keyPressedDelegate;
-                _subscribedKeyboard = null;
-            }
-            if (_subscribedMouse != null)
-            {
-                _subscribedMouse.MouseWheelRotated -= _mouseWheelRotatedDelegate;
-                _subscribedMouse.MouseMoved -= _mouseMovedDelegate;
-                _subscribedMouse.MouseButtonReleased -= _mouseButtonReleasedDelegate;
-                _subscribedMouse.MouseButtonPressed -= _mouseButtonPressedDelegate;
-                _subscribedMouse = null;
-            }
+            _inputReceiver.InjectCharacter(e.Character.GetValueOrDefault());
         }
 
-        /// <summary>Unsubscribes from the events of all player-specific input devices</summary>
-        private void unsubscribePlayerSpecificInputDevices()
+        private void _mouseListener_MouseDown(object sender, MouseEventArgs e)
         {
-            if (_subscribedChatPad != null)
-            {
-                _subscribedChatPad.CharacterEntered -= _characterEnteredDelegate;
-                _subscribedChatPad.KeyReleased -= _keyReleasedDelegate;
-                _subscribedChatPad.KeyPressed -= _keyPressedDelegate;
-                _subscribedChatPad = null;
-            }
-
-            if (_subscribedGamePad != null)
-            {
-                _subscribedGamePad.ButtonPressed -= _buttonPressedDelegate;
-                _subscribedGamePad.ButtonReleased -= _buttonReleasedDelegate;
-                _subscribedGamePad = null;
-            }
+            _inputReceiver.InjectMousePress(e.Button);
         }
 
-        /// <summary>Called when a button on the game pad has been released</summary>
-        /// <param name="buttons">Button that has been released</param>
-        private void buttonReleased(Buttons buttons)
+        private void _mouseListener_MouseUp(object sender, MouseEventArgs e)
         {
-            _inputReceiver.InjectButtonRelease(buttons);
+            _inputReceiver.InjectMouseRelease(e.Button);
         }
 
-        /// <summary>Called when a button on the game pad has been pressed</summary>
-        /// <param name="buttons">Button that has been pressed</param>
-        private void buttonPressed(Buttons buttons)
+        private void _mouseListener_MouseMoved(object sender, MouseEventArgs e)
         {
-            if ((buttons & Buttons.DPadUp) != 0)
+            _inputReceiver.InjectMouseMove(e.Position.X, e.Position.Y);
+        }
+
+        private void _mouseListener_MouseWheelMoved(object sender, MouseEventArgs e)
+        {
+            _inputReceiver.InjectMouseWheel(e.ScrollWheelDelta);
+        }
+
+        private void _gamePadListener_ButtonDown(object sender, GamePadEventArgs e)
+        {
+            if ((e.Button & Buttons.DPadUp) != 0)
                 _inputReceiver.InjectCommand(Command.Up);
-            else if ((buttons & Buttons.DPadDown) != 0)
+            else if ((e.Button & Buttons.DPadDown) != 0)
                 _inputReceiver.InjectCommand(Command.Down);
-            else if ((buttons & Buttons.DPadLeft) != 0)
+            else if ((e.Button & Buttons.DPadLeft) != 0)
                 _inputReceiver.InjectCommand(Command.Left);
-            else if ((buttons & Buttons.DPadRight) != 0)
+            else if ((e.Button & Buttons.DPadRight) != 0)
                 _inputReceiver.InjectCommand(Command.Right);
             else
-                _inputReceiver.InjectButtonPress(buttons);
+                _inputReceiver.InjectButtonPress(e.Button);
         }
 
-        /// <summary>Called when the mouse wheel has been rotated</summary>
-        /// <param name="ticks">Number of ticks the wheel was rotated</param>
-        private void mouseWheelRotated(float ticks)
+        private void _gamePadListener_ButtonUp(object sender, GamePadEventArgs e)
         {
-            _inputReceiver.InjectMouseWheel(ticks);
-        }
-
-        /// <summary>Called when the mouse cursor has been moved</summary>
-        /// <param name="x">New X coordinate of the mouse cursor</param>
-        /// <param name="y">New Y coordinate of the mouse cursor</param>
-        private void mouseMoved(float x, float y)
-        {
-            _inputReceiver.InjectMouseMove(x, y);
-        }
-
-        /// <summary>Called when a mouse button has been released</summary>
-        /// <param name="buttons">Mouse button that has been released</param>
-        private void mouseButtonReleased(MouseButton buttons)
-        {
-            _inputReceiver.InjectMouseRelease(buttons);
-        }
-
-        /// <summary>Called when a mouse button has been pressed</summary>
-        /// <param name="buttons">Mouse button that has been pressed</param>
-        private void mouseButtonPressed(MouseButton buttons)
-        {
-            _inputReceiver.InjectMousePress(buttons);
-        }
-
-        /// <summary>Called when a character has been entered on the keyboard</summary>
-        /// <param name="character">Character that has been entered</param>
-        private void characterEntered(char character)
-        {
-            _inputReceiver.InjectCharacter(character);
-        }
-
-        /// <summary>Called when a key has been released</summary>
-        /// <param name="key">Key that was released</param>
-        private void keyReleased(Keys key)
-        {
-            _inputReceiver.InjectKeyRelease(key);
-        }
-
-        /// <summary>Called when a key has been pressed</summary>
-        /// <param name="key">Key that was pressed</param>
-        private void keyPressed(Keys key)
-        {
-            _inputReceiver.InjectKeyPress(key);
+            _inputReceiver.InjectButtonRelease(e.Button);
         }
 
         /// <summary>Retrieves the input service from a service provider</summary>
         /// <param name="serviceProvider">
-        ///   Service provider the service is taken from
+        ///     Service provider the service is taken from
         /// </param>
         /// <returns>The input service stored in the service provider</returns>
-        private static InputListeners.IInputService getInputService(IServiceProvider serviceProvider)
+        private static IGuiInputService GetInputService(IServiceProvider serviceProvider)
         {
-            var inputService = (InputListeners.IInputService)serviceProvider.GetService(typeof(InputListeners.IInputService));
+            var inputService = (IGuiInputService) serviceProvider.GetService(typeof(IGuiInputService));
 
             if (inputService == null)
                 throw new InvalidOperationException(
-                  "Using the GUI with the DefaultInputCapturer requires the IInputService. " +
-                  "Please either add the IInputService to Game.Services by using the " +
-                  "Nuclex.Input.InputManager in your game or provide a custom IInputCapturer " +
-                  "implementation for the GUI and assign it before GuiManager.Initialize() " +
-                  "is called."
+                    "Using the GUI with the DefaultInputCapturer requires the IInputService. " +
+                    "Please either add the IInputService to Game.Services by using the " +
+                    "Nuclex.Input.InputManager in your game or provide a custom IInputCapturer " +
+                    "implementation for the GUI and assign it before GuiManager.Initialize() " +
+                    "is called."
                 );
 
             return inputService;
         }
 
-        #endregion
+        /// <summary>Dummy receiver for input events</summary>
+        private class DummyInputReceiver : IInputReceiver
+        {
+            /// <summary>Default instance of the dummy receiver</summary>
+            public static readonly DummyInputReceiver Default = new DummyInputReceiver();
+
+            /// <summary>Injects an input command into the input receiver</summary>
+            /// <param name="command">Input command to be injected</param>
+            public void InjectCommand(Command command)
+            {
+            }
+
+            /// <summary>Called when a button on the gamepad has been pressed</summary>
+            /// <param name="button">Button that has been pressed</param>
+            public void InjectButtonPress(Buttons button)
+            {
+            }
+
+            /// <summary>Called when a button on the gamepad has been released</summary>
+            /// <param name="button">Button that has been released</param>
+            public void InjectButtonRelease(Buttons button)
+            {
+            }
+
+            /// <summary>Injects a mouse position update into the receiver</summary>
+            /// <param name="x">New X coordinate of the mouse cursor on the screen</param>
+            /// <param name="y">New Y coordinate of the mouse cursor on the screen</param>
+            public void InjectMouseMove(float x, float y)
+            {
+            }
+
+            /// <summary>Called when a mouse button has been pressed down</summary>
+            /// <param name="button">Index of the button that has been pressed</param>
+            public void InjectMousePress(MouseButton button)
+            {
+            }
+
+            /// <summary>Called when a mouse button has been released again</summary>
+            /// <param name="button">Index of the button that has been released</param>
+            public void InjectMouseRelease(MouseButton button)
+            {
+            }
+
+            /// <summary>Called when the mouse wheel has been rotated</summary>
+            /// <param name="ticks">Number of ticks that the mouse wheel has been rotated</param>
+            public void InjectMouseWheel(float ticks)
+            {
+            }
+
+            /// <summary>Called when a key on the keyboard has been pressed down</summary>
+            /// <param name="keyCode">Code of the key that was pressed</param>
+            public void InjectKeyPress(Keys keyCode)
+            {
+            }
+
+            /// <summary>Called when a key on the keyboard has been released again</summary>
+            /// <param name="keyCode">Code of the key that was released</param>
+            public void InjectKeyRelease(Keys keyCode)
+            {
+            }
+
+            /// <summary>Handle user text input by a physical or virtual keyboard</summary>
+            /// <param name="character">Character that has been entered</param>
+            public void InjectCharacter(char character)
+            {
+            }
+        }
     }
 }

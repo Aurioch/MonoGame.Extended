@@ -12,13 +12,30 @@ namespace MonoGame.Extended.Screens
 
     public class ScreenComponent : DrawableGameComponent, IScreenManager
     {
-        public ScreenComponent(Game game) 
+        private readonly List<Screen> _screens;
+
+        public ScreenComponent(Game game, IEnumerable<Screen> screens)
+            : this(game)
+        {
+            foreach (var screen in screens)
+                Register(screen);
+        }
+
+        public ScreenComponent(Game game)
             : base(game)
         {
             _screens = new List<Screen>();
         }
 
-        private readonly List<Screen> _screens;
+        public T FindScreen<T>() where T : Screen
+        {
+            var screen = _screens.OfType<T>().FirstOrDefault();
+
+            if (screen == null)
+                throw new InvalidOperationException($"{typeof(T).Name} not registered");
+
+            return screen;
+        }
 
         public T Register<T>(T screen)
             where T : Screen
@@ -70,16 +87,6 @@ namespace MonoGame.Extended.Screens
 
             foreach (var screen in _screens.Where(s => s.IsVisible))
                 screen.Draw(gameTime);
-        }
-
-        public T FindScreen<T>() where T : Screen
-        {
-            var screen = _screens.OfType<T>().FirstOrDefault();
-
-            if (screen == null)
-                throw new InvalidOperationException($"{typeof(T).Name} not registered");
-
-            return screen;
         }
     }
 }

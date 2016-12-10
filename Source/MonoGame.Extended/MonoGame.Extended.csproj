@@ -38,7 +38,23 @@
   <ItemGroup>
     <Compile Include="Animations\Animation.cs" />
     <Compile Include="Animations\AnimationComponent.cs" />
-    <Compile Include="Animations\SpriteSheets\AnimatedSprite.cs" />
+    <Compile Include="Maps\Renderers\DynamicGroupRenderDetails.cs" />
+    <Compile Include="Maps\Renderers\FullMapRenderer.cs" />
+    <Compile Include="Maps\Renderers\GroupRenderDetails.cs" />
+    <Compile Include="Maps\Renderers\IMapRenderer.cs" />
+    <Compile Include="Maps\Renderers\MapRenderDetails.cs" />
+    <Compile Include="Maps\Renderers\MapRendererConfig.cs" />
+    <Compile Include="Maps\Tiled\TiledTilesetTile.cs" />
+    <Compile Include="Maps\Tiled\TiledTilesetTileFrame.cs" />
+    <Compile Include="Primitives\BoundingRectangle.cs" />
+    <Compile Include="Primitives\Point2.cs" />
+    <Compile Include="Primitives\Ray2D.cs" />
+    <Compile Include="Primitives\RayHelper.cs" />
+    <Compile Include="Primitives\Segment2D.cs" />
+    <Compile Include="Primitives\Size2.cs" />
+    <Compile Include="Shapes\EllipseF.cs" />
+    <Compile Include="Shapes\PolylineF.cs" />
+    <Compile Include="Sprites\AnimatedSprite.cs" />
     <Compile Include="Animations\Tweens\DelayTween.cs" />
     <Compile Include="Animations\Tweens\FluentTweening.cs" />
     <Compile Include="Animations\Tweens\EasingFunctions.cs" />
@@ -60,7 +76,7 @@
     <Compile Include="Collections\Deque.cs" />
     <Compile Include="Collections\ListExtensions.cs" />
     <Compile Include="Collections\Pool.cs" />
-    <Compile Include="ColorExtensions.cs" />
+    <Compile Include="ColorHelper.cs" />
     <Compile Include="Entities\Components\EntityComponent.cs" />
     <Compile Include="Entities\Entity.cs" />
     <Compile Include="Entities\EntityComponentSystem.cs" />
@@ -68,7 +84,6 @@
     <Compile Include="Entities\Systems\ComponentSystem.cs" />
     <Compile Include="Entities\Systems\ParticleEmitterSystem.cs" />
     <Compile Include="Entities\Systems\SpriteBatchSystem.cs" />
-    <Compile Include="InputListeners\InputManager.cs" />
     <Compile Include="NuclexGui\Controls\Desktop\GuiButtonControl.cs" />
     <Compile Include="NuclexGui\Controls\Desktop\GuiChoiceControl.cs" />
     <Compile Include="NuclexGui\Controls\Desktop\GuiCloseWindowButtonControl.cs" />
@@ -86,13 +101,8 @@
     <Compile Include="NuclexGui\Controls\GuiLabelControl.cs" />
     <Compile Include="NuclexGui\Controls\GuiPressableControl.cs" />
     <Compile Include="NuclexGui\Controls\GuiProgressControl.cs" />
-    <Compile Include="NuclexGui\Input\IInputService.cs" />
-    <Compile Include="NuclexGui\Input\MainInputCapturer.cs" />
-    <Compile Include="NuclexGui\Resources\SuaveSkinResources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>SuaveSkinResources.resx</DependentUpon>
-    </Compile>
+    <Compile Include="NuclexGui\IGuiInputService.cs" />
+    <Compile Include="NuclexGui\Input\DefaultInputCapturer.cs" />
     <Compile Include="NuclexGui\Visuals\Flat\FlatGuiGraphics.cs" />
     <Compile Include="NuclexGui\Visuals\Flat\FlatGuiGraphicsDrawing.cs" />
     <Compile Include="NuclexGui\Visuals\Flat\GuiSkin.cs" />
@@ -110,39 +120,8 @@
     <Compile Include="NuclexGui\Visuals\Flat\Renderers\FlatProgressControlRenderer.cs" />
     <Compile Include="NuclexGui\Visuals\Flat\Renderers\FlatVerticalSliderControlRenderer.cs" />
     <Compile Include="NuclexGui\Visuals\Flat\Renderers\FlatWindowControlRenderer.cs" />
-    <Compile Include="Support\EnumHelper.cs" />
-    <Compile Include="Graphics\Batching\Drawers\BatchDrawer.cs" />
-    <Compile Include="Graphics\Batching\BatchCommand.cs" />
-    <Compile Include="Graphics\Batching\BatchSortMode.cs" />
-    <Compile Include="Graphics\Batching\IBatchCommandContext.cs" />
-    <Compile Include="Graphics\Batching\PrimitiveBatch.cs" />
-    <Compile Include="Graphics\Batching\BatchCommandQueueOverflowException.cs" />
-    <Compile Include="Graphics\Batching\Queuers\BatchCommandQueuer.cs" />
-    <Compile Include="Graphics\Batching\Queuers\DeferredBatchCommandQueuer.cs" />
-    <Compile Include="Graphics\Batching\Queuers\ImmediateBatchCommandQueuer.cs" />
-    <Compile Include="Graphics\Effects\ITexture2DEffect.cs" />
-    <Compile Include="Graphics\GeometryBuffer.Dynamic.cs" />
-    <Compile Include="Graphics\Effects\MatrixChainEffect.cs" />
-    <Compile Include="Graphics\Effects\EffectResource.cs" />
-    <Compile Include="Graphics\Effects\IMatrixChainEffect.cs" />
-    <Compile Include="Graphics\Effects\DefaultEffect2D.cs" />
-    <Compile Include="Graphics\GeometryBuffer.cs" />
-    <Compile Include="Graphics\GeometryBufferExtensions.VertexPositionColorTexture.cs" />
-    <Compile Include="Graphics\GeometryBufferOverflowException.cs" />
-    <Compile Include="Graphics\PrimitiveTypeExtensions.cs" />
-    <Compile Include="Graphics\GeometryBatch2D.cs" />
-    <Compile Include="Graphics\GeometryBuffer.Static.cs" />
-    <Compile Include="InputListeners\Devices\ExtendedAxes.cs" />
-    <Compile Include="InputListeners\Devices\ExtendedGamePadState.cs" />
-    <Compile Include="InputListeners\Devices\ExtendedSliders.cs" />
-    <Compile Include="InputListeners\Devices\IGamePad.cs" />
-    <Compile Include="InputListeners\Devices\IInputDevice.cs" />
-    <Compile Include="InputListeners\Devices\IKeyboard.cs" />
-    <Compile Include="InputListeners\Devices\IMouse.cs" />
-    <Compile Include="InputListeners\Devices\ITouchPanel.cs" />
-    <Compile Include="InputListeners\Devices\TouchState.cs" />
+    <Compile Include="NuclexGui\Support\EnumHelper.cs" />
     <Compile Include="InputListeners\ExtendedPlayerIndex.cs" />
-    <Compile Include="InputListeners\IInputService.cs" />
     <Compile Include="NuclexGui\Controls\GuiControl.cs" />
     <Compile Include="NuclexGui\Controls\GuiControlEventArgs.cs" />
     <Compile Include="NuclexGui\Controls\GuiControlInput.cs" />
@@ -154,64 +133,32 @@
     <Compile Include="NuclexGui\GuiScreen.cs" />
     <Compile Include="NuclexGui\IGuiService.cs" />
     <Compile Include="NuclexGui\Input\Command.cs" />
-    <Compile Include="NuclexGui\Input\DefaultInputCapturer.cs" />
     <Compile Include="NuclexGui\Input\IInputCapturer.cs" />
     <Compile Include="NuclexGui\Input\IInputReceiver.cs" />
     <Compile Include="NuclexGui\UniRectangle.cs" />
     <Compile Include="NuclexGui\UniScalar.cs" />
     <Compile Include="NuclexGui\UniVector.cs" />
-    <Compile Include="Gui\GuiDialog.cs" />
-    <Compile Include="Gui\Controls\GuiLabel.cs" />
-    <Compile Include="Gui\Controls\GuiToggleButton.cs" />
-    <Compile Include="Gui\Serialization\ContentConverter.cs" />
-    <Compile Include="Gui\Controls\GuiButton.cs" />
-    <Compile Include="Gui\Controls\GuiControl.cs" />
-    <Compile Include="Gui\Controls\GuiControlStyle.cs" />
-    <Compile Include="Gui\GuiComponent.cs" />
-    <Compile Include="Gui\GuiLayout.cs" />
-    <Compile Include="Gui\Serialization\GuiTextureAtlasConverter.cs" />
-    <Compile Include="Gui\Serialization\GuiControlConverter.cs" />
-    <Compile Include="Gui\Serialization\GuiControlStyleConveter.cs" />
-    <Compile Include="Gui\Serialization\GuiLayoutConverter.cs" />
-    <Compile Include="Gui\Serialization\TextureRegion2DConveter.cs" />
     <Compile Include="IEquatableByRef.cs" />
     <Compile Include="InputListeners\InputListenerComponent.cs" />
     <Compile Include="Matrix2D.cs" />
+    <Compile Include="SimpleDrawableGameComponent.cs" />
+    <Compile Include="SimpleGameComponent.cs" />
     <Compile Include="NuclexGui\Visuals\Flat\FlatGuiVisualizer.cs" />
     <Compile Include="NuclexGui\Visuals\Flat\IFlatControlRenderer.cs" />
     <Compile Include="NuclexGui\Visuals\Flat\IFlatGuiGraphics.cs" />
     <Compile Include="NuclexGui\Visuals\IGuiVisualizer.cs" />
     <Compile Include="Collections\ObservableCollection.cs" />
-    <Compile Include="Support\Plugins\AssemblyLoadEventArgs.cs" />
-    <Compile Include="Support\Plugins\Employer.cs" />
-    <Compile Include="Support\Plugins\IAssemblyLoader.cs" />
-    <Compile Include="Support\Plugins\NoPluginAttribute.cs" />
-    <Compile Include="Support\Plugins\PluginHelper.cs" />
-    <Compile Include="Support\Plugins\PluginHost.cs" />
-    <Compile Include="Support\Plugins\PluginRepository.cs" />
     <Compile Include="Vector2Extensions.cs" />
     <Compile Include="Screens\Screen.cs" />
     <Compile Include="Screens\ScreenComponent.cs" />
     <Compile Include="Serialization\ColorJsonConverter.cs" />
     <Compile Include="Serialization\Vector2JsonConverter.cs" />
     <Compile Include="Serialization\SizeFJsonConverter.cs" />
-    <Compile Include="Gui\GuiAlignmentHelper.cs" />
-    <Compile Include="Gui\Serialization\GuiJsonConverter.cs" />
-    <Compile Include="Gui\Serialization\GuiJsonConverterService.cs" />
-    <Compile Include="Gui\GuiThickness.cs" />
     <Compile Include="IColorable.cs" />
     <Compile Include="IPoolable.cs" />
-    <Compile Include="Collisions\CollisionActor.cs" />
-    <Compile Include="Collisions\CollisionGrid.cs" />
-    <Compile Include="Collisions\CollisionGridCell.cs" />
-    <Compile Include="Collisions\CollisionGridCellFlag.cs" />
-    <Compile Include="Collisions\CollisionInfo.cs" />
-    <Compile Include="Collisions\CollisionWorld.cs" />
-    <Compile Include="Collisions\IActorTarget.cs" />
     <Compile Include="Content\ContentManagerExtensions.cs" />
     <Compile Include="Camera2D.cs" />
     <Compile Include="Content\ContentReaderExtensions.cs" />
-    <Compile Include="EventHandlerExtensions.cs" />
     <Compile Include="GameTimeExtensions.cs" />
     <Compile Include="IMovable.cs" />
     <Compile Include="InputListeners\GamePadEventArgs.cs" />
@@ -234,9 +181,6 @@
     <Compile Include="IScalable.cs" />
     <Compile Include="ISizable.cs" />
     <Compile Include="IUpdate.cs" />
-    <Compile Include="Maps\Tiled\CollisionWorldExtensions.cs" />
-    <Compile Include="Maps\Tiled\TiledTileSetTileFrame.cs" />
-    <Compile Include="Maps\Tiled\TiledTileSetTile.cs" />
     <Compile Include="Particles\ColorExtensions.cs" />
     <Compile Include="Particles\FastRandomExtensions.cs" />
     <Compile Include="Particles\HslColor.cs" />
@@ -282,7 +226,7 @@
     <Compile Include="Maps\Tiled\SpriteBatchExtensions.cs" />
     <Compile Include="Maps\Tiled\TiledMapOrientation.cs" />
     <Compile Include="Maps\Tiled\TiledObject.cs" />
-    <Compile Include="Maps\Tiled\TiledObjectGroup.cs" />
+    <Compile Include="Maps\Tiled\TiledObjectLayer.cs" />
     <Compile Include="MatrixExtensions.cs" />
     <Compile Include="SceneGraphs\ISceneEntity.cs" />
     <Compile Include="SceneGraphs\SceneEntityCollection.cs" />
@@ -298,7 +242,7 @@
     <Compile Include="Shapes\ShapeF.cs" />
     <Compile Include="Size.cs" />
     <Compile Include="SizeF.cs" />
-    <Compile Include="Sprites\NinePatch.cs" />
+    <Compile Include="TextureAtlases\NinePatchRegion2D.cs" />
     <Compile Include="Sprites\SpriteBatchExtensions.cs" />
     <Compile Include="TextureAtlases\TextureAtlas.cs" />
     <Compile Include="TextureAtlases\TextureAtlasReader.cs" />
@@ -314,7 +258,7 @@
     <Compile Include="Maps\Tiled\TiledRenderOrder.cs" />
     <Compile Include="Maps\Tiled\TiledProperties.cs" />
     <Compile Include="Maps\Tiled\TiledTile.cs" />
-    <Compile Include="Maps\Tiled\TiledTileSet.cs" />
+    <Compile Include="Maps\Tiled\TiledTileset.cs" />
     <Compile Include="Timers\ContinuousClock.cs" />
     <Compile Include="Timers\CountdownTimer.cs" />
     <Compile Include="Timers\GameTimer.cs" />
@@ -327,20 +271,12 @@
     <Compile Include="ViewportAdapters\ViewportAdapter.cs" />
     <Compile Include="FramesPerSecondCounter.cs" />
     <Compile Include="FramesPerSecondCounterComponent.cs" />
-    <Compile Include="Support\WeakReference.cs" />
+    <Compile Include="NuclexGui\Support\WeakReference.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="PCLStorage, Version=1.0.2.0, Culture=neutral, PublicKeyToken=286fe515a2c35b64, processorArchitecture=MSIL">
-      <HintPath>..\packages\PCLStorage.1.0.2\lib\portable-net45+wp8+wpa81+win8+monoandroid+monotouch+Xamarin.iOS+Xamarin.Mac\PCLStorage.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="PCLStorage.Abstractions, Version=1.0.2.0, Culture=neutral, PublicKeyToken=286fe515a2c35b64, processorArchitecture=MSIL">
-      <HintPath>..\packages\PCLStorage.1.0.2\lib\portable-net45+wp8+wpa81+win8+monoandroid+monotouch+Xamarin.iOS+Xamarin.Mac\PCLStorage.Abstractions.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Core" />
@@ -349,32 +285,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Graphics\Effects\Resources\DefaultEffect2D.mgfxo" />
-    <EmbeddedResource Include="NuclexGui\Resources\SuaveSkinResources.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>SuaveSkinResources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <None Include="Graphics\Effects\Resources\compile.bat" />
     <EmbeddedResource Include="NuclexGui\Resources\Skins\SuaveSkin.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="NuclexGui\Resources\Skins\DefaultFont.xnb">
+    <Content Include="NuclexGui\Resources\Skins\DefaultFont.xnb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="NuclexGui\Resources\Skins\SuaveSheet.xnb">
+    </Content>
+    <Content Include="NuclexGui\Resources\Skins\SuaveSheet.xnb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="NuclexGui\Resources\Skins\TitleFont.xnb">
+    </Content>
+    <Content Include="NuclexGui\Resources\Skins\TitleFont.xnb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
+    </Content>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="Graphics\Effects\Resources\DefaultEffect2D.fx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="NuclexGui\Controls\Arcade\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

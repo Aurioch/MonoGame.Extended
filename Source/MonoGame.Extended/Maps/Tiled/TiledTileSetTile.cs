@@ -2,46 +2,47 @@
 
 namespace MonoGame.Extended.Maps.Tiled
 {
-    public class TiledTileSetTile
+    public class TiledTilesetTile
     {
-        public TiledTileSetTile(int id)
+        private TiledTilesetTileFrame _currentFrame;
+        private double _currentTimeInMilliseconds;
+
+        public TiledTilesetTile(int id)
         {
             Id = id;
-            Animation = new List<TiledTileSetTileFrame>();
-            ObjectGroups = new List<TiledObjectGroup>();
+            Frames = new List<TiledTilesetTileFrame>();
             Properties = new TiledProperties();
+
             _currentTimeInMilliseconds = 0.0;
         }
+
         public int Id { get; set; }
-        public List<TiledTileSetTileFrame> Animation { get; private set; }
-        public List<TiledObjectGroup> ObjectGroups { get; private set; }
+        public List<TiledTilesetTileFrame> Frames { get; }
         public TiledProperties Properties { get; private set; }
-        public int? CurrentTileId
-        {
-            get { return (_currentFrame == null) ? null :(int?)_currentFrame.TileId; }
-        }
 
-        private double _currentTimeInMilliseconds;
-        private TiledTileSetTileFrame _currentFrame;
+        public int? CurrentTileId => _currentFrame?.TileId;
 
-        public TiledTileSetTileFrame CreateTileSetTileFrame(int order, int tileId, int duration)
+        public TiledTilesetTileFrame CreateTileSetTileFrame(int order, int tileId, int duration)
         {
-            var tileSetTileFrame = new TiledTileSetTileFrame(order, tileId, duration);
-            Animation.Add(tileSetTileFrame);
-            _currentFrame = Animation[0];
+            var tileSetTileFrame = new TiledTilesetTileFrame(order, tileId, duration);
+            Frames.Add(tileSetTileFrame);
+            _currentFrame = Frames[0];
             return tileSetTileFrame;
         }
 
         public void Update(double deltaTime)
         {
-            if (Animation.Count == 0) return;
+            if (Frames.Count == 0)
+                return;
+
             _currentTimeInMilliseconds += deltaTime;
+
             if (_currentTimeInMilliseconds >= _currentFrame.Duration)
             {
                 _currentTimeInMilliseconds = 0.0;
 
-                int nextFrame = (_currentFrame.Order + 1) % Animation.Count;
-                _currentFrame = Animation[nextFrame];
+                var nextFrame = (_currentFrame.Order + 1)%Frames.Count;
+                _currentFrame = Frames[nextFrame];
             }
         }
     }

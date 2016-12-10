@@ -5,8 +5,24 @@ using MonoGame.Extended.ViewportAdapters;
 
 namespace MonoGame.Extended.InputListeners
 {
+    /// <summary>
+    ///     Handles mouse input.
+    /// </summary>
+    /// <remarks>
+    ///     Due to nature of the listener, even when game is not in focus, listener will continue to be updated.
+    ///     To avoid that, manual pause of Update() method is required whenever game loses focus.
+    ///     To avoid having to do it manually, register listener to <see cref="InputListenerComponent" />
+    /// </remarks>
     public class MouseListener : InputListener
     {
+        private MouseState _currentState;
+        private bool _dragging;
+        private GameTime _gameTime;
+        private bool _hasDoubleClicked;
+        private MouseEventArgs _mouseDownArgs;
+        private MouseEventArgs _previousClickArgs;
+        private MouseState _previousState;
+
         public MouseListener()
             : this(new MouseListenerSettings())
         {
@@ -31,18 +47,10 @@ namespace MonoGame.Extended.InputListeners
         public int DragThreshold { get; }
 
         /// <summary>
-        /// Returns true if the mouse has moved between the current and previous frames.
+        ///     Returns true if the mouse has moved between the current and previous frames.
         /// </summary>
         /// <value><c>true</c> if the mouse has moved; otherwise, <c>false</c>.</value>
-        public bool HasMouseMoved => _previousState.X != _currentState.X || _previousState.Y != _currentState.Y;
-
-        private MouseState _currentState;
-        private MouseState _previousState;
-        private GameTime _gameTime;
-        private MouseEventArgs _previousClickArgs;
-        private MouseEventArgs _mouseDownArgs;
-        private bool _hasDoubleClicked;
-        private bool _dragging;
+        public bool HasMouseMoved => (_previousState.X != _currentState.X) || (_previousState.Y != _currentState.Y);
 
         public event EventHandler<MouseEventArgs> MouseDown;
         public event EventHandler<MouseEventArgs> MouseUp;
@@ -56,12 +64,13 @@ namespace MonoGame.Extended.InputListeners
 
         private void CheckButtonPressed(Func<MouseState, ButtonState> getButtonState, MouseButton button)
         {
-            if (getButtonState(_currentState) == ButtonState.Pressed &&
-                getButtonState(_previousState) == ButtonState.Released)
+            if ((getButtonState(_currentState) == ButtonState.Pressed) &&
+                (getButtonState(_previousState) == ButtonState.Released))
             {
-                var args = new MouseEventArgs(ViewportAdapter, _gameTime.TotalGameTime, _previousState, _currentState, button);
+                var args = new MouseEventArgs(ViewportAdapter, _gameTime.TotalGameTime, _previousState, _currentState,
+                    button);
 
-                MouseDown.Raise(this, args);
+                MouseDown?.Invoke(this, args);
                 _mouseDownArgs = args;
 
                 if (_previousClickArgs != null)
@@ -71,7 +80,7 @@ namespace MonoGame.Extended.InputListeners
 
                     if (clickMilliseconds <= DoubleClickMilliseconds)
                     {
-                        MouseDoubleClicked.Raise(this, args);
+                        MouseDoubleClicked?.Invoke(this, args);
                         _hasDoubleClicked = true;
                     }
 
@@ -82,10 +91,11 @@ namespace MonoGame.Extended.InputListeners
 
         private void CheckButtonReleased(Func<MouseState, ButtonState> getButtonState, MouseButton button)
         {
-            if (getButtonState(_currentState) == ButtonState.Released &&
-                getButtonState(_previousState) == ButtonState.Pressed)
+            if ((getButtonState(_currentState) == ButtonState.Released) &&
+                (getButtonState(_previousState) == ButtonState.Pressed))
             {
-                var args = new MouseEventArgs(ViewportAdapter, _gameTime.TotalGameTime, _previousState, _currentState, button);
+                var args = new MouseEventArgs(ViewportAdapter, _gameTime.TotalGameTime, _previousState, _currentState,
+                    button);
 
                 if (_mouseDownArgs.Button == args.Button)
                 {
@@ -95,16 +105,16 @@ namespace MonoGame.Extended.InputListeners
                     if (clickMovement < DragThreshold)
                     {
                         if (!_hasDoubleClicked)
-                            MouseClicked.Raise(this, args);
+                            MouseClicked?.Invoke(this, args);
                     }
                     else // If the mouse has moved between mouse down and mouse up
                     {
-                        MouseDragEnd.Raise(this, args);
+                        MouseDragEnd?.Invoke(this, args);
                         _dragging = false;
                     }
                 }
 
-                MouseUp.Raise(this, args);
+                MouseUp?.Invoke(this, args);
 
                 _hasDoubleClicked = false;
                 _previousClickArgs = args;
@@ -113,16 +123,16 @@ namespace MonoGame.Extended.InputListeners
 
         private void CheckMouseDragged(Func<MouseState, ButtonState> getButtonState, MouseButton button)
         {
-            if (getButtonState(_currentState) == ButtonState.Pressed &&
-                getButtonState(_previousState) == ButtonState.Pressed)
+            if ((getButtonState(_currentState) == ButtonState.Pressed) &&
+                (getButtonState(_previousState) == ButtonState.Pressed))
             {
-                var args = new MouseEventArgs(ViewportAdapter, _gameTime.TotalGameTime, _previousState, _currentState, button);
+                var args = new MouseEventArgs(ViewportAdapter, _gameTime.TotalGameTime, _previousState, _currentState,
+                    button);
 
                 if (_mouseDownArgs.Button == args.Button)
-                {
                     if (_dragging)
                     {
-                        MouseDrag.Raise(this, args);
+                        MouseDrag?.Invoke(this, args);
                     }
                     else
                     {
@@ -132,10 +142,9 @@ namespace MonoGame.Extended.InputListeners
                         if (clickMovement > DragThreshold)
                         {
                             _dragging = true;
-                            MouseDragStart.Raise(this, args);
+                            MouseDragStart?.Invoke(this, args);
                         }
                     }
-                }
             }
         }
 
@@ -159,7 +168,8 @@ namespace MonoGame.Extended.InputListeners
             // Check for any sort of mouse movement.
             if (HasMouseMoved)
             {
-                MouseMoved.Raise(this, new MouseEventArgs(ViewportAdapter, gameTime.TotalGameTime, _previousState, _currentState));
+                MouseMoved?.Invoke(this,
+                    new MouseEventArgs(ViewportAdapter, gameTime.TotalGameTime, _previousState, _currentState));
 
                 CheckMouseDragged(s => s.LeftButton, MouseButton.Left);
                 CheckMouseDragged(s => s.MiddleButton, MouseButton.Middle);
@@ -170,7 +180,8 @@ namespace MonoGame.Extended.InputListeners
 
             // Handle mouse wheel events.
             if (_previousState.ScrollWheelValue != _currentState.ScrollWheelValue)
-                MouseWheelMoved.Raise(this, new MouseEventArgs(ViewportAdapter, gameTime.TotalGameTime, _previousState, _currentState));
+                MouseWheelMoved?.Invoke(this,
+                    new MouseEventArgs(ViewportAdapter, gameTime.TotalGameTime, _previousState, _currentState));
 
             _previousState = _currentState;
         }

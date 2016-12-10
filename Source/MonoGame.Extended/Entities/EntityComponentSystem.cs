@@ -9,7 +9,15 @@ namespace MonoGame.Extended.Entities
 {
     public class EntityComponentSystem
     {
-        public EntityComponentSystem() 
+        private readonly List<EntityComponent> _components;
+        private readonly List<DyingEntity> _dyingEntities;
+        private readonly List<Entity> _entities;
+        private readonly Dictionary<string, Entity> _entitiesByName;
+
+        private readonly List<ComponentSystem> _systems;
+        private long _nextEntityId;
+
+        public EntityComponentSystem()
         {
             _entities = new List<Entity>();
             _entitiesByName = new Dictionary<string, Entity>();
@@ -19,23 +27,10 @@ namespace MonoGame.Extended.Entities
             _nextEntityId = 1;
         }
 
-        private readonly List<ComponentSystem> _systems;
-        private readonly List<Entity> _entities;
-        private readonly List<EntityComponent> _components;
-        private readonly Dictionary<string, Entity> _entitiesByName;
-        private readonly List<DyingEntity> _dyingEntities;
-        private long _nextEntityId;
-
         internal event EventHandler<EntityComponent> ComponentAttached;
         internal event EventHandler<EntityComponent> ComponentDetached;
         internal event EventHandler<Entity> EntityCreated;
         internal event EventHandler<Entity> EntityDestroyed;
-
-        public class DyingEntity
-        {
-            public float SecondsUntilDeath;
-            public Entity Entity;
-        }
 
         public void RegisterSystem(ComponentSystem system)
         {
@@ -88,10 +83,8 @@ namespace MonoGame.Extended.Entities
 
         public void DestroyEntity(Entity entity)
         {
-            foreach (var component in _components.Where(c => c.Entity == entity).OfType<IDisposable>())
-                component.Dispose();
-
-            _components.RemoveAll(c => c.Entity == entity);
+            foreach (var component in _components.Where(c => c.Entity == entity).ToArray())
+                DetachComponent(component);
 
             if (entity.Name != null)
                 _entitiesByName.Remove(entity.Name);
@@ -115,6 +108,7 @@ namespace MonoGame.Extended.Entities
         internal void DetachComponent(EntityComponent component)
         {
             _components.Remove(component);
+            (component as IDisposable)?.Dispose();
             ComponentDetached?.Invoke(this, component);
         }
 
@@ -144,6 +138,12 @@ namespace MonoGame.Extended.Entities
         {
             foreach (var componentSystem in _systems)
                 componentSystem.Draw(gameTime);
+        }
+
+        public class DyingEntity
+        {
+            public Entity Entity;
+            public float SecondsUntilDeath;
         }
     }
 }
