@@ -1,21 +1,22 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using MonoGame.Extended;
 using MonoGame.Extended.BitmapFonts;
+using MonoGame.Extended.Shapes;
 using MonoGame.Extended.ViewportAdapters;
 
 namespace Demo.BitmapFonts
 {
     public class Game2 : Game
     {
+        // ReSharper disable once NotAccessedField.Local
         private GraphicsDeviceManager _graphicsDeviceManager;
         private BoxingViewportAdapter _viewportAdapter;
         private Texture2D _backgroundTexture;
-        private BitmapFont _bitmapFont;
-        private SpriteFont _spriteFont;
+        private BitmapFont _bitmapFontImpact;
+        private SpriteFont _spriteFontImpact;
         private SpriteBatch _spriteBatch;
-        private float _rotation = 0;
+        private BitmapFont _bitmapFontMontserrat;
 
         public Game2()
         {
@@ -30,8 +31,9 @@ namespace Demo.BitmapFonts
         {
             _viewportAdapter = new BoxingViewportAdapter(Window, GraphicsDevice, 800, 480);
             _backgroundTexture = Content.Load<Texture2D>("vignette");
-            _bitmapFont = Content.Load<BitmapFont>("impact-32");
-            _spriteFont = Content.Load<SpriteFont>("test");
+            _bitmapFontImpact = Content.Load<BitmapFont>("impact-32");
+            _bitmapFontMontserrat = Content.Load<BitmapFont>("montserrat-32");
+            _spriteFontImpact = Content.Load<SpriteFont>("test");
             _spriteBatch = new SpriteBatch(GraphicsDevice);
         }
 
@@ -41,13 +43,10 @@ namespace Demo.BitmapFonts
 
         protected override void Update(GameTime gameTime)
         {
-            var deltaTime = gameTime.GetElapsedSeconds();
             var keyboardState = Keyboard.GetState();
 
             if (keyboardState.IsKeyDown(Keys.Escape))
                 Exit();
-
-            _rotation += deltaTime * 0.01f;
 
             base.Update(gameTime);
         }
@@ -60,47 +59,65 @@ namespace Demo.BitmapFonts
                 samplerState: SamplerState.LinearClamp, 
                 blendState: BlendState.AlphaBlend, 
                 transformMatrix: _viewportAdapter.GetScaleMatrix());
-            //_spriteBatch.Draw(_backgroundTexture, _viewportAdapter.BoundingRectangle, Color.White);
+            _spriteBatch.Draw(_backgroundTexture, _viewportAdapter.BoundingRectangle, Color.DarkBlue);
 
-            const string helloWorld = "The quick brown fox jumps over the lazy dog\r\nThe lazy dog jumps back over the quick brown fox";
+            const string helloWorld = "The quick brown fox jumps over the lazy dog\nThe lazy dog jumps back over the quick brown fox";
             
-            var position = new Vector2(400, 240);
-            var offset = new Vector2(0, 100);
-            var scale = Vector2.One * 1.2f;
+            var position = new Vector2(400, 140);
+            var offset = new Vector2(0, 50);
+            var scale = Vector2.One;
             var color = Color.White;
-            //_rotation = MathHelper.Pi/16f;
+            var rotation = 0;//MathHelper.Pi/64f;
 
             // sprite font
-            var spriteFontSize = _spriteFont.MeasureString(helloWorld);
-            
+            var spriteFontSize = _spriteFontImpact.MeasureString(helloWorld);
+            var spriteFontOrigin = spriteFontSize / 2f;
+
             _spriteBatch.DrawString(
-                spriteFont: _spriteFont,
+                spriteFont: _spriteFontImpact,
                 text: helloWorld,
                 position: position - offset,
                 color: color,
-                rotation: _rotation,
-                origin: new Vector2(spriteFontSize.X / 2f, spriteFontSize.Y / 2f),
+                rotation: rotation,
+                origin: spriteFontOrigin,
                 scale: scale,
                 effects: SpriteEffects.None,
                 layerDepth: 0);
-            
-            //_spriteBatch.DrawRectangle(position - origin - offset, spriteFontSize, Color.Magenta);
+
+            _spriteBatch.DrawRectangle(position - spriteFontOrigin - offset, spriteFontSize, Color.Magenta);
 
             // bitmap font
-            var bitmapFontSize = _bitmapFont.MeasureString(helloWorld);
+            var bitmapFontSize = _bitmapFontImpact.MeasureString(helloWorld);
+            var bitmapFontOrigin = bitmapFontSize / 2f;
 
             _spriteBatch.DrawString(
-                bitmapFont: _bitmapFont,
+                bitmapFont: _bitmapFontImpact,
                 text: helloWorld,
                 position: position + offset,
                 color: color,
-                rotation: _rotation,
-                origin: new Vector2(bitmapFontSize.Width / 2f, bitmapFontSize.Height / 2f),
+                rotation: rotation,
+                origin: bitmapFontOrigin,
                 scale: scale,
                 effect: SpriteEffects.None,
                 layerDepth: 0);
             
-            //_spriteBatch.DrawRectangle(position - origin + offset, bitmapFontSize, Color.Red);
+            _spriteBatch.DrawRectangle(position - bitmapFontOrigin + offset, bitmapFontSize, Color.Red);
+
+            var bitmapFontMontserratSize = _bitmapFontMontserrat.MeasureString(helloWorld);
+            var bitmapFontMontserratOrigin = bitmapFontMontserratSize / 2f;
+
+            _spriteBatch.DrawString(
+                bitmapFont: _bitmapFontMontserrat,
+                text: helloWorld,
+                position: position + offset * 3,
+                color: color,
+                rotation: rotation,
+                origin: bitmapFontMontserratOrigin,
+                scale: scale,
+                effect: SpriteEffects.None,
+                layerDepth: 0);
+
+            _spriteBatch.DrawRectangle(position - bitmapFontMontserratOrigin + offset * 3, bitmapFontMontserratSize, Color.Green);
 
             _spriteBatch.End();
 
