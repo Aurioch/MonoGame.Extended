@@ -21,7 +21,7 @@ namespace MonoGame.Extended
                     return;
 
                 _isVisible = value;
-                DrawOrderChanged?.Invoke(this, EventArgs.Empty);
+                VisibleChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -44,5 +44,13 @@ namespace MonoGame.Extended
         public event EventHandler<EventArgs> VisibleChanged;
 
         public abstract void Draw(GameTime gameTime);
+
+        protected virtual void LoadContent()
+        {
+        }
+
+        protected virtual void UnloadContent()
+        {
+        }
     }
 }

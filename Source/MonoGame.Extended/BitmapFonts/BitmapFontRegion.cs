@@ -1,5 +1,6 @@
 using System;
 using MonoGame.Extended.TextureAtlases;
+using System.Collections.Generic;
 
 namespace MonoGame.Extended.BitmapFonts
 {
@@ -12,6 +13,7 @@ namespace MonoGame.Extended.BitmapFonts
             XOffset = xOffset;
             YOffset = yOffset;
             XAdvance = xAdvance;
+            Kernings = new Dictionary<int, int>();
         }
 
         public int Character { get; }
@@ -21,6 +23,7 @@ namespace MonoGame.Extended.BitmapFonts
         public int XAdvance { get; }
         public int Width => TextureRegion.Width;
         public int Height => TextureRegion.Height;
+        public Dictionary<int, int> Kernings { get; }
 
         public override string ToString()
         {

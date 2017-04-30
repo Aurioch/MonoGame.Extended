@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using MonoGame.Extended.TextureAtlases;
 
 namespace MonoGame.Extended.Gui.Controls
 {
@@ -6,7 +6,17 @@ namespace MonoGame.Extended.Gui.Controls
     {
         public GuiLabel()
         {
-            BackgroundColor = Color.TransparentBlack;
+        }
+
+        public GuiLabel(string text)
+        {
+            Text = text;
+        }
+
+        public GuiLabel(string text, TextureRegion2D backgroundRegion)
+            : base(backgroundRegion)
+        {
+            Text = text;
         }
     }
 }

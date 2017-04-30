@@ -1,10 +1,9 @@
-﻿using System;
+﻿using System.ComponentModel;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
-using MonoGame.Extended.InputListeners;
-using MonoGame.Extended.Shapes;
+using MonoGame.Extended.Input.InputListeners;
 using MonoGame.Extended.TextureAtlases;
+using Newtonsoft.Json;
 
 namespace MonoGame.Extended.Gui.Controls
 {
@@ -12,70 +11,119 @@ namespace MonoGame.Extended.Gui.Controls
     {
         protected GuiControl()
         {
+            Color = Color.White;
+            TextColor = Color.White;
             IsEnabled = true;
+            IsVisible = true;
+            Controls = new GuiControlCollection(this);
+            Origin = Vector2.Zero;
         }
 
-        public string Name { get; set; }
-        public float Left => Position.X;
-        public float Top => Position.Y;
-        public float Right => Position.X + Width;
-        public float Bottom => Position.Y + Height;
-        public float Width => Size.Width;
-        public float Height => Size.Height;
-        public Vector2 Center => new Vector2(Position.X + Width * 0.5f, Position.Y + Height * 0.5f);
-        public RectangleF BoundingRectangle => new RectangleF(Left, Top, Width, Height);
-        public bool IsFocused { get; internal set; }
-        public TextureRegion2D BackgroundRegion { get; set; }
-        public Color BackgroundColor { get; set; } = Color.White;
-        public GuiHorizontalAlignment HorizontalAlignment { get; set; } = GuiHorizontalAlignment.Stretch;
-        public GuiVerticalAlignment VerticalAlignment { get; set; } = GuiVerticalAlignment.Stretch;
-        public GuiThickness Margin { get; set; }
-        public GuiThickness Padding { get; set; }
-        public GuiControlStyle DisabledStyle { get; set; }
-        public GuiControlStyle HoverStyle { get; set; }
-        public Vector2 Position { get; set; }
-        public SizeF Size { get; set; }
-        public GuiControl Parent { get; set; }
-        public BitmapFont Font { get; set; }
-        public string Text { get; set; } = string.Empty;
-        public Color TextColor { get; set; } = Color.White;
-        public GuiHorizontalAlignment HorizontalTextAlignment { get; set; } = GuiHorizontalAlignment.Centre;
-        public GuiVerticalAlignment VerticalTextAlignment { get; set; } = GuiVerticalAlignment.Centre;
+        protected GuiControl(TextureRegion2D backgroundRegion)
+            : this()
+        {
+            BackgroundRegion = backgroundRegion;
+        }
 
-        public Rectangle DestinationRectangle
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [JsonIgnore]
+        public GuiControl Parent { get; internal set; }
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [JsonIgnore]
+        public Rectangle BoundingRectangle
         {
             get
             {
-                var x = (int) Position.X;
-                var y = (int) Position.Y;
+                var offset = Vector2.Zero;
 
                 if (Parent != null)
-                {
-                    var parentRectangle = Parent.DestinationRectangle;
-                    x += parentRectangle.X;
-                    y += parentRectangle.Y;
-                }
+                    offset = Parent.BoundingRectangle.Location.ToVector2();
 
-                return new Rectangle(x, y, (int)Size.Width, (int)Size.Height);
+                return new Rectangle((offset + Position - Size * Origin).ToPoint(), (Point)Size);
             }
         }
 
-        private bool _isHovered;
-        public bool IsHovered
-        {
-            get { return _isHovered; }
-            private set
-            {
-                if (_isHovered != value)
-                {
-                    _isHovered = value;
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public Thickness Margin { get; set; }
 
-                    if (_isHovered)
-                        HoverStyle?.Apply(this);
-                    else
-                        HoverStyle?.Revert(this);
-                }
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public Thickness ClipPadding { get; set; }
+
+        public Rectangle ClippingRectangle
+        {
+            get
+            {
+                var r = BoundingRectangle;
+                return new Rectangle(r.Left + ClipPadding.Left, r.Top + ClipPadding.Top,
+                    r.Width - ClipPadding.Right - ClipPadding.Left, r.Height - ClipPadding.Bottom - ClipPadding.Top);
             }
+        }
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public bool IsFocused { get; set; }
+
+        public string Name { get; set; }
+        public Vector2 Position { get; set; }
+        public Vector2 Offset { get; set; }
+        public Vector2 Origin { get; set; }
+        public Color Color { get; set; }
+        public BitmapFont Font { get; set; }
+        public string Text { get; set; }
+        public Color TextColor { get; set; }
+        public Vector2 TextOffset { get; set; }
+        public GuiControlCollection Controls { get; }
+        public HorizontalAlignment HorizontalAlignment { get; set; } = HorizontalAlignment.Stretch;
+        public VerticalAlignment VerticalAlignment { get; set; } = VerticalAlignment.Stretch;
+        public TextureRegion2D BackgroundRegion { get; set; }
+
+        public Size2 Size { get; set; }
+
+        public float Width
+        {
+            get { return Size.Width; }
+            set { Size = new Size2(value, Size.Height); }
+        }
+
+        public float Height
+        {
+            get { return Size.Height; }
+            set { Size = new Size2(Size.Width, value); }
+        }
+
+        public Size2 GetDesiredSize(IGuiContext context, Size2 availableSize)
+        {
+            return CalculateDesiredSize(context, availableSize);
+        }
+
+        protected virtual Size2 CalculateDesiredSize(IGuiContext context, Size2 availableSize)
+        {
+            var minimumSize = Size2.Empty;
+            var ninePatch = BackgroundRegion as NinePatchRegion2D;
+
+            if (ninePatch != null)
+            {
+                minimumSize.Width += ninePatch.LeftPadding + ninePatch.RightPadding;
+                minimumSize.Height += ninePatch.TopPadding + ninePatch.BottomPadding;
+            }
+            else if(BackgroundRegion != null)
+            {
+                minimumSize.Width += BackgroundRegion.Width;
+                minimumSize.Height += BackgroundRegion.Height;
+            }
+
+            var font = Font ?? context.DefaultFont;
+
+            if (font != null && !string.IsNullOrEmpty(Text))
+            {
+                var textSize = font.MeasureString(Text);
+                minimumSize.Width += textSize.Width;
+                minimumSize.Height += textSize.Height;
+            }
+
+            // ReSharper disable CompareOfFloatsByEqualityOperator
+            return new Size2(Size.Width == 0 ? minimumSize.Width : Size.Width, Size.Height == 0 ? minimumSize.Height : Size.Height);
+            // ReSharper restore CompareOfFloatsByEqualityOperator
         }
 
         private bool _isEnabled;
@@ -84,64 +132,91 @@ namespace MonoGame.Extended.Gui.Controls
             get { return _isEnabled; }
             set
             {
-                if (_isEnabled != value)
-                {
-                    _isEnabled = value;
-
-                    if (!_isEnabled)
-                        DisabledStyle?.Apply(this);
-                    else
-                        DisabledStyle?.Revert(this);
-                }
+                _isEnabled = value;
+                DisabledStyle?.ApplyIf(this, !_isEnabled);
             }
         }
 
-        public void Draw(SpriteBatch spriteBatch)
-        {
+        public bool IsVisible { get; set; }
+        public GuiControlStyle HoverStyle { get; set; }
 
+        private GuiControlStyle _disabledStyle;
+        public GuiControlStyle DisabledStyle
+        {
+            get { return _disabledStyle; }
+            set
+            {
+                _disabledStyle = value;
+                DisabledStyle?.ApplyIf(this, !_isEnabled);
+            }
         }
 
-        public event EventHandler<MouseEventArgs> MouseDown;
-        public event EventHandler<MouseEventArgs> MouseUp;
+        public virtual void OnScrolled(int delta) { }
 
-        public virtual void Update(GameTime gameTime)
-        {
-        }
+        public virtual void OnKeyTyped(IGuiContext context, KeyboardEventArgs args) { }
+        public virtual void OnKeyPressed(IGuiContext context, KeyboardEventArgs args) { }
 
-        public virtual void OnMouseDown(object sender, MouseEventArgs args)
-        {
-            MouseDown?.Invoke(this, args);
-        }
-
-        public virtual void OnMouseUp(object sender, MouseEventArgs args)
-        {
-            MouseUp?.Invoke(this, args);
-        }
-
-        public virtual void OnKeyTyped(object sender, KeyboardEventArgs args)
-        {
-        }
-
-        public virtual void OnMouseEnter(object sender, MouseEventArgs args)
+        public virtual void OnPointerDown(IGuiContext context, GuiPointerEventArgs args) { }
+        public virtual void OnPointerUp(IGuiContext context, GuiPointerEventArgs args) { }
+        
+        public virtual void OnPointerEnter(IGuiContext context, GuiPointerEventArgs args)
         {
             if (IsEnabled)
-                IsHovered = true;
+                HoverStyle?.Apply(this);
         }
 
-        public virtual void OnMouseLeave(object sender, MouseEventArgs args)
+        public virtual void OnPointerLeave(IGuiContext context, GuiPointerEventArgs args)
         {
             if (IsEnabled)
-                IsHovered = false;
+                HoverStyle?.Revert(this);
         }
 
-        public bool Contains(Vector2 point)
+        public void Draw(IGuiContext context, IGuiRenderer renderer, float deltaSeconds)
         {
-            return BoundingRectangle.Contains(point);
+            DrawBackground(context, renderer, deltaSeconds);
+            DrawForeground(context, renderer, deltaSeconds, GetTextInfo(context, Text, BoundingRectangle, HorizontalAlignment.Centre, VerticalAlignment.Centre));
         }
 
-        public bool Contains(Point point)
+        protected TextInfo GetTextInfo(IGuiContext context, string text, Rectangle targetRectangle, HorizontalAlignment horizontalAlignment, VerticalAlignment verticalAlignment)
         {
-            return BoundingRectangle.Contains(point);
+            var font = Font ?? context.DefaultFont;
+            var textSize = font.GetStringRectangle(text ?? string.Empty, Vector2.Zero).Size;
+            var destinationRectangle = GuiLayoutHelper.GetDestinationRectangle(horizontalAlignment, verticalAlignment, textSize, targetRectangle);
+            var textPosition = destinationRectangle.Location.ToVector2();
+            var textInfo = new TextInfo(text, font, textPosition, textSize, TextColor, ClippingRectangle);
+            return textInfo;
+        }
+
+        protected virtual void DrawBackground(IGuiContext context, IGuiRenderer renderer, float deltaSeconds)
+        {
+            renderer.DrawRegion(BackgroundRegion, BoundingRectangle, Color);
+            //renderer.DrawRectangle(BoundingRectangle, Color.Red);
+        }
+
+        protected virtual void DrawForeground(IGuiContext context, IGuiRenderer renderer, float deltaSeconds, TextInfo textInfo)
+        {
+            if (!string.IsNullOrWhiteSpace(textInfo.Text))
+                renderer.DrawText(textInfo.Font, textInfo.Text, textInfo.Position + TextOffset, textInfo.Color, textInfo.ClippingRectangle);
+        }
+
+        protected struct TextInfo
+        {
+            public TextInfo(string text, BitmapFont font, Vector2 position, Vector2 size, Color color, Rectangle? clippingRectangle)
+            {
+                Text = text;
+                Font = font;
+                Size = size;
+                Color = color;
+                ClippingRectangle = clippingRectangle;
+                Position = position;
+            }
+
+            public string Text;
+            public BitmapFont Font;
+            public Vector2 Size;
+            public Color Color;
+            public Rectangle? ClippingRectangle;
+            public Vector2 Position;
         }
     }
 }

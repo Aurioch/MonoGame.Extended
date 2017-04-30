@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGame.Extended.Collections;
 
 namespace MonoGame.Extended.Graphics.Effects
 {
@@ -8,35 +9,28 @@ namespace MonoGame.Extended.Graphics.Effects
     ///     monitor.
     /// </summary>
     /// <seealso cref="Effect" />
-    /// <seealso cref="IMatrixChainEffect" />
+    /// <seealso cref="IEffectMatrices" />
     public abstract class MatrixChainEffect : Effect, IMatrixChainEffect
     {
+        /// <summary>
+        ///     The bitmask for use with <see cref="Flags"/> indicating wether <see cref="World"/>, <see cref="View"/>, or <see cref="Projection"/> has changed in the last frame.
+        /// </summary>
+        protected static uint DirtyWorldViewProjectionBitMask = BitVector32.CreateMask();
+
+        /// <summary>
+        ///     The bitmask for use with <see cref="Flags"/> indicating wether to use a default projection matrix or a custom projection matrix.
+        /// </summary>
+        protected static uint UseDefaultProjectionBitMask = BitVector32.CreateMask(DirtyWorldViewProjectionBitMask);
+
+        /// <summary>
+        ///     The dirty flags associated with this <see cref="MatrixChainEffect"/>.
+        /// </summary>
+        protected BitVector32 Flags;
+
         private Matrix _projection = Matrix.Identity;
         private Matrix _view = Matrix.Identity;
         private Matrix _world = Matrix.Identity;
-        private bool _worldViewProjectionIsDirty;
-        private EffectParameter _worldViewProjectionParameter;
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="MatrixChainEffect" /> class.
-        /// </summary>
-        /// <param name="graphicsDevice">The graphics device.</param>
-        /// <param name="effectCode">The effect code.</param>
-        protected MatrixChainEffect(GraphicsDevice graphicsDevice, byte[] effectCode)
-            : base(graphicsDevice, effectCode)
-        {
-            CacheEffectParameters();
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="MatrixChainEffect" /> class.
-        /// </summary>
-        /// <param name="cloneSource">The clone source.</param>
-        protected MatrixChainEffect(Effect cloneSource)
-            : base(cloneSource)
-        {
-            CacheEffectParameters();
-        }
+        private EffectParameter _matrixParameter;
 
         /// <summary>
         ///     Gets or sets the model-to-world <see cref="Matrix" />.
@@ -75,13 +69,41 @@ namespace MonoGame.Extended.Graphics.Effects
         }
 
         /// <summary>
+        ///     Initializes a new instance of the <see cref="MatrixChainEffect" /> class.
+        /// </summary>
+        /// <param name="graphicsDevice">The graphics device.</param>
+        /// <param name="byteCode">The effect code.</param>
+        protected MatrixChainEffect(GraphicsDevice graphicsDevice, byte[] byteCode)
+            : base(graphicsDevice, byteCode)
+        {
+            Initialize();
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="MatrixChainEffect" /> class.
+        /// </summary>
+        /// <param name="cloneSource">The clone source.</param>
+        protected MatrixChainEffect(Effect cloneSource)
+            : base(cloneSource)
+        {
+            Initialize();
+        }
+
+        private void Initialize()
+        {
+            Flags[UseDefaultProjectionBitMask] = true;
+
+            _matrixParameter = Parameters["WorldViewProjection"];
+        }
+
+        /// <summary>
         ///     Sets the model-to-world <see cref="Matrix" />.
         /// </summary>
         /// <param name="world">The model-to-world <see cref="Matrix" />.</param>
         public void SetWorld(ref Matrix world)
         {
             _world = world;
-            _worldViewProjectionIsDirty = true;
+            Flags[DirtyWorldViewProjectionBitMask] = true;
         }
 
         /// <summary>
@@ -91,7 +113,7 @@ namespace MonoGame.Extended.Graphics.Effects
         public void SetView(ref Matrix view)
         {
             _view = view;
-            _worldViewProjectionIsDirty = true;
+            Flags[DirtyWorldViewProjectionBitMask] = true;
         }
 
         /// <summary>
@@ -101,34 +123,33 @@ namespace MonoGame.Extended.Graphics.Effects
         public void SetProjection(ref Matrix projection)
         {
             _projection = projection;
-            _worldViewProjectionIsDirty = true;
-        }
-
-        private void CacheEffectParameters()
-        {
-            _worldViewProjectionParameter = Parameters["WorldViewProjection"];
+            Flags[DirtyWorldViewProjectionBitMask] = true;
+            Flags[UseDefaultProjectionBitMask] = false;
         }
 
         /// <summary>
         ///     Computes derived parameter values immediately before applying the effect.
         /// </summary>
-        protected override bool OnApply()
+        protected override void OnApply()
         {
             base.OnApply();
 
             // ReSharper disable once InvertIf
-            if (_worldViewProjectionIsDirty)
+            if (Flags[DirtyWorldViewProjectionBitMask] || Flags[UseDefaultProjectionBitMask])
             {
-                _worldViewProjectionIsDirty = false;
+                if (Flags[UseDefaultProjectionBitMask])
+                {
+                    var viewport = GraphicsDevice.Viewport;
+                    _projection = Matrix.CreateOrthographicOffCenter(0, viewport.Width, viewport.Height, 0, 0, -1);
+                }
 
                 Matrix worldViewProjection;
                 Matrix.Multiply(ref _world, ref _view, out worldViewProjection);
                 Matrix.Multiply(ref worldViewProjection, ref _projection, out worldViewProjection);
-                _worldViewProjectionParameter.SetValue(worldViewProjection);
-            }
+                _matrixParameter.SetValue(worldViewProjection);
 
-            // in MonoGame 3.6 this method won't return anything; see https://github.com/MonoGame/MonoGame/pull/5090
-            return false;
+                Flags[DirtyWorldViewProjectionBitMask] = false;
+            }
         }
     }
 }

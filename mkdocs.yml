@@ -1,5 +1,5 @@
 site_name: MonoGame.Extended
-docs_dir: Documentation
+repo_url: https://github.com/craftworkgames/MonoGame.Extended
 pages:
 - Home: index.md
-- About: about.md
+- Installation: installation.md

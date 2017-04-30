@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.TextureAtlases;
@@ -27,35 +28,40 @@ namespace MonoGame.Extended.BitmapFonts
         ///     The depth of a layer. By default, 0 represents the front layer and 1 represents a back layer.
         ///     Use SpriteSortMode if you want sprites to be sorted during drawing.
         /// </param>
+        /// <param name="clippingRectangle">Clips the boundaries of the text so that it's not drawn outside the clipping rectangle</param>
         public static void DrawString(this SpriteBatch spriteBatch, BitmapFont bitmapFont, string text, Vector2 position,
-            Color color, float rotation, Vector2 origin, Vector2 scale, SpriteEffects effect, float layerDepth)
+            Color color, float rotation, Vector2 origin, Vector2 scale, SpriteEffects effect, float layerDepth, Rectangle? clippingRectangle = null)
         {
-            if (text == null) throw new ArgumentNullException(nameof(text));
-            if (effect != SpriteEffects.None) throw new NotSupportedException($"{effect} is not currently supported for {nameof(BitmapFont)}");
+            if (text == null)
+                throw new ArgumentNullException(nameof(text));
+            if (effect != SpriteEffects.None)
+                throw new NotSupportedException($"{effect} is not currently supported for {nameof(BitmapFont)}");
 
-            var dx = position.X;
-            var dy = position.Y;
-
-            for (var i = 0; i < text.Length; i++)
+            var glyphs = bitmapFont.GetGlyphs(text, position);
+            foreach (var glyph in glyphs)
             {
-                var character = BitmapFont.GetUnicodeCodePoint(text, i);
-                var fontRegion = bitmapFont.GetCharacterRegion(character);
+                if (glyph.FontRegion == null)
+                    continue;
+                var characterOrigin = position - glyph.Position + origin;
+                spriteBatch.Draw(glyph.FontRegion.TextureRegion, position, color, rotation, characterOrigin, scale, effect, layerDepth, clippingRectangle);
+            }
+        }
 
-                if (fontRegion != null)
-                {
-                    var characterPosition = new Vector2(dx + fontRegion.XOffset, dy + fontRegion.YOffset);
-                    var characterOrigin = position - characterPosition + origin;
+        public static void DrawString(this SpriteBatch spriteBatch, BitmapFont bitmapFont, StringBuilder text, Vector2 position,
+            Color color, float rotation, Vector2 origin, Vector2 scale, SpriteEffects effect, float layerDepth, Rectangle? clippingRectangle = null)
+        {
+            if (text == null)
+                throw new ArgumentNullException(nameof(text));
+            if (effect != SpriteEffects.None)
+                throw new NotSupportedException($"{effect} is not currently supported for {nameof(BitmapFont)}");
 
-                    spriteBatch.Draw(fontRegion.TextureRegion, position, color, rotation, characterOrigin, scale, effect, layerDepth);
-
-                    dx += fontRegion.XAdvance + bitmapFont.LetterSpacing;
-                }
-
-                if (character == '\n')
-                {
-                    dy += bitmapFont.LineHeight;
-                    dx = position.X;
-                }
+            var glyphs = bitmapFont.GetGlyphs(text, position);
+            foreach (var glyph in glyphs)
+            {
+                if (glyph.FontRegion == null)
+                    continue;
+                var characterOrigin = position - glyph.Position + origin;
+                spriteBatch.Draw(glyph.FontRegion.TextureRegion, position, color, rotation, characterOrigin, scale, effect, layerDepth, clippingRectangle);
             }
         }
 
@@ -79,10 +85,17 @@ namespace MonoGame.Extended.BitmapFonts
         ///     The depth of a layer. By default, 0 represents the front layer and 1 represents a back layer.
         ///     Use SpriteSortMode if you want sprites to be sorted during drawing.
         /// </param>
+        /// <param name="clippingRectangle">Clips the boundaries of the text so that it's not drawn outside the clipping rectangle</param>
         public static void DrawString(this SpriteBatch spriteBatch, BitmapFont font, string text, Vector2 position,
-            Color color, float rotation, Vector2 origin, float scale, SpriteEffects effect, float layerDepth)
+            Color color, float rotation, Vector2 origin, float scale, SpriteEffects effect, float layerDepth, Rectangle? clippingRectangle = null)
         {
-            DrawString(spriteBatch, font, text, position, color, rotation, origin, new Vector2(scale, scale), effect, layerDepth);
+            DrawString(spriteBatch, font, text, position, color, rotation, origin, new Vector2(scale, scale), effect, layerDepth, clippingRectangle);
+        }
+
+        public static void DrawString(this SpriteBatch spriteBatch, BitmapFont font, StringBuilder text, Vector2 position,
+            Color color, float rotation, Vector2 origin, float scale, SpriteEffects effect, float layerDepth, Rectangle? clippingRectangle = null)
+        {
+            DrawString(spriteBatch, font, text, position, color, rotation, origin, new Vector2(scale, scale), effect, layerDepth, clippingRectangle);
         }
 
         /// <summary>
@@ -108,10 +121,11 @@ namespace MonoGame.Extended.BitmapFonts
         ///     The depth of a layer. By default, 0 represents the front layer and 1 represents a back layer.
         ///     Use SpriteSortMode if you want sprites to be sorted during drawing.
         /// </param>
-        /// <param name="wrapWidth">The width (in pixels) where to wrap the text at.</param>
-        public static void DrawString(this SpriteBatch spriteBatch, BitmapFont font, string text, Vector2 position, Color color, float layerDepth)
+        /// <param name="clippingRectangle">Clips the boundaries of the text so that it's not drawn outside the clipping rectangle</param>
+        public static void DrawString(this SpriteBatch spriteBatch, BitmapFont font, string text, Vector2 position, Color color, float layerDepth, Rectangle? clippingRectangle = null)
         {
-            DrawString(spriteBatch, font, text, position, color, rotation: 0, origin: Vector2.Zero, scale: Vector2.One, effect: SpriteEffects.None, layerDepth: layerDepth);
+            DrawString(spriteBatch, font, text, position, color, rotation: 0, origin: Vector2.Zero, scale: Vector2.One, effect: SpriteEffects.None, 
+                layerDepth: layerDepth, clippingRectangle: clippingRectangle);
         }
 
         /// <summary>
@@ -126,10 +140,17 @@ namespace MonoGame.Extended.BitmapFonts
         ///     The <see cref="Color" /> to tint a sprite. Use <see cref="Color.White" /> for full color with no
         ///     tinting.
         /// </param>
-        /// <param name="wrapWidth">The width (in pixels) where to wrap the text at.</param>
-        public static void DrawString(this SpriteBatch spriteBatch, BitmapFont font, string text, Vector2 position, Color color)
+        /// <param name="clippingRectangle">Clips the boundaries of the text so that it's not drawn outside the clipping rectangle</param>
+        public static void DrawString(this SpriteBatch spriteBatch, BitmapFont font, string text, Vector2 position, Color color, Rectangle? clippingRectangle = null)
         {
-            DrawString(spriteBatch, font, text, position, color, rotation: 0, origin: Vector2.Zero, scale: Vector2.One, effect: SpriteEffects.None, layerDepth: 0);
+            DrawString(spriteBatch, font, text, position, color, rotation: 0, origin: Vector2.Zero, scale: Vector2.One, effect: SpriteEffects.None, 
+                layerDepth: 0, clippingRectangle: clippingRectangle);
+        }
+
+        public static void DrawString(this SpriteBatch spriteBatch, BitmapFont font, StringBuilder text, Vector2 position, Color color, Rectangle? clippingRectangle = null)
+        {
+            DrawString(spriteBatch, font, text, position, color, rotation: 0, origin: Vector2.Zero, scale: Vector2.One, effect: SpriteEffects.None,
+                layerDepth: 0, clippingRectangle: clippingRectangle);
         }
     }
 }

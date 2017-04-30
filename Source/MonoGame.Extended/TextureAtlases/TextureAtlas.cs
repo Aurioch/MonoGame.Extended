@@ -25,16 +25,14 @@ namespace MonoGame.Extended.TextureAtlases
     /// </remarks>
     public class TextureAtlas : IEnumerable<TextureRegion2D>
     {
-        private readonly Dictionary<string, int> _regionMap;
-
-        private readonly List<TextureRegion2D> _regions;
-
         /// <summary>
         ///     Initializes a new texture atlas with an empty list of regions.
         /// </summary>
+        /// <param name="name">The asset name of this texture atlas</param>
         /// <param name="texture">Source <see cref="Texture2D " /> image used to draw on screen.</param>
-        public TextureAtlas(Texture2D texture)
+        public TextureAtlas(string name, Texture2D texture)
         {
+            Name = name;
             Texture = texture;
             _regions = new List<TextureRegion2D>();
             _regionMap = new Dictionary<string, int>();
@@ -43,14 +41,20 @@ namespace MonoGame.Extended.TextureAtlases
         /// <summary>
         ///     Initializes a new texture atlas and populates it with regions.
         /// </summary>
+        /// <param name="name">The asset name of this texture atlas</param>
         /// <param name="texture">Source <see cref="Texture2D " /> image used to draw on screen.</param>
         /// <param name="regions">A collection of regions to populate the atlas with.</param>
-        public TextureAtlas(Texture2D texture, Dictionary<string, Rectangle> regions)
-            : this(texture)
+        public TextureAtlas(string name, Texture2D texture, Dictionary<string, Rectangle> regions)
+            : this(name, texture)
         {
             foreach (var region in regions)
                 CreateRegion(region.Key, region.Value.X, region.Value.Y, region.Value.Width, region.Value.Height);
         }
+
+        private readonly Dictionary<string, int> _regionMap;
+        private readonly List<TextureRegion2D> _regions;
+
+        public string Name { get; }
 
         /// <summary>
         ///     Gets a source <see cref="Texture2D" /> image.
@@ -68,7 +72,6 @@ namespace MonoGame.Extended.TextureAtlases
         public int RegionCount => _regions.Count;
 
         public TextureRegion2D this[string name] => GetRegion(name);
-
         public TextureRegion2D this[int index] => GetRegion(index);
 
         /// <summary>
@@ -90,6 +93,27 @@ namespace MonoGame.Extended.TextureAtlases
         }
 
         /// <summary>
+        /// Determines whether the texture atlas contains a region
+        /// </summary>
+        /// <param name="name">Name of the texture region.</param>
+        /// <returns></returns>
+        public bool ContainsRegion(string name)
+        {
+            return _regionMap.ContainsKey(name);
+        }
+
+        /// <summary>
+        /// Internal method for adding region
+        /// </summary>
+        /// <param name="region">Texture region.</param>
+        private void AddRegion(TextureRegion2D region)
+        {
+            var index = _regions.Count;
+            _regions.Add(region);
+            _regionMap.Add(region.Name, index);
+        }
+
+        /// <summary>
         ///     Creates a new texture region and adds it to the list of the <see cref="TextureAtlas" />' regions.
         /// </summary>
         /// <param name="name">Name of the texture region.</param>
@@ -104,10 +128,29 @@ namespace MonoGame.Extended.TextureAtlases
                 throw new InvalidOperationException($"Region {name} already exists in the texture atlas");
 
             var region = new TextureRegion2D(name, Texture, x, y, width, height);
-            var index = _regions.Count;
-            _regions.Add(region);
-            _regionMap.Add(name, index);
+            AddRegion(region);
             return region;
+        }
+
+        /// <summary>
+        ///     Creates a new nine patch texture region and adds it to the list of the <see cref="TextureAtlas" />' regions.
+        /// </summary>
+        /// <param name="name">Name of the texture region.</param>
+        /// <param name="x">X coordinate of the region's top left corner.</param>
+        /// <param name="y">Y coordinate of the region's top left corner.</param>
+        /// <param name="width">Width of the texture region.</param>
+        /// <param name="height">Height of the texture region.</param>
+        /// <param name="thickness">Thickness of the nine patch region.</param>
+        /// <returns>Created texture region.</returns>
+        public NinePatchRegion2D CreateNinePatchRegion(string name, int x, int y, int width, int height, Thickness thickness)
+        {
+            if (_regionMap.ContainsKey(name))
+                throw new InvalidOperationException($"Region {name} already exists in the texture atlas");
+
+            var textureRegion = new TextureRegion2D(name, Texture, x, y, width, height);
+            var ninePatchRegion = new NinePatchRegion2D(textureRegion, thickness);
+            AddRegion(ninePatchRegion);
+            return ninePatchRegion;
         }
 
         /// <summary>
@@ -154,10 +197,22 @@ namespace MonoGame.Extended.TextureAtlases
         /// <returns>The <see cref="TextureRegion2D" />.</returns>
         public TextureRegion2D GetRegion(string name)
         {
+            return GetRegion<TextureRegion2D>(name);
+        }
+
+        /// <summary>
+        /// Gets a texture region from the <see cref="TextureAtlas" /> of a specified type.
+        /// This is can be useful if the atlas contains <see cref="NinePatchRegion2D"/>'s.
+        /// </summary>
+        /// <typeparam name="T">Type of the region to get</typeparam>
+        /// <param name="name">Name of the region to get</param>
+        /// <returns>The texture region</returns>
+        public T GetRegion<T>(string name) where T : TextureRegion2D
+        {
             int index;
 
             if (_regionMap.TryGetValue(name, out index))
-                return GetRegion(index);
+                return (T) GetRegion(index);
 
             throw new KeyNotFoundException(name);
         }
@@ -165,6 +220,7 @@ namespace MonoGame.Extended.TextureAtlases
         /// <summary>
         ///     Creates a new <see cref="TextureAtlas" /> and populates it with a grid of <see cref="TextureRegion2D" />.
         /// </summary>
+        /// <param name="name">The name of this texture atlas</param>
         /// <param name="texture">Source <see cref="Texture2D" /> image used to draw on screen</param>
         /// <param name="regionWidth">Width of the <see cref="TextureRegion2D" />.</param>
         /// <param name="regionHeight">Height of the <see cref="TextureRegion2D" />.</param>
@@ -172,10 +228,10 @@ namespace MonoGame.Extended.TextureAtlases
         /// <param name="margin">Minimum distance of the regions from the border of the source <see cref="Texture2D" /> image.</param>
         /// <param name="spacing">Horizontal and vertical space between regions.</param>
         /// <returns>A created and populated <see cref="TextureAtlas" />.</returns>
-        public static TextureAtlas Create(Texture2D texture, int regionWidth, int regionHeight,
+        public static TextureAtlas Create(string name, Texture2D texture, int regionWidth, int regionHeight,
             int maxRegionCount = int.MaxValue, int margin = 0, int spacing = 0)
         {
-            var textureAtlas = new TextureAtlas(texture);
+            var textureAtlas = new TextureAtlas(name, texture);
             var count = 0;
             var width = texture.Width - margin;
             var height = texture.Height - margin;
@@ -183,6 +239,7 @@ namespace MonoGame.Extended.TextureAtlases
             var yIncrement = regionHeight + spacing;
 
             for (var y = margin; y < height; y += yIncrement)
+            {
                 for (var x = margin; x < width; x += xIncrement)
                 {
                     var regionName = $"{texture.Name ?? "region"}{count}";
@@ -192,6 +249,7 @@ namespace MonoGame.Extended.TextureAtlases
                     if (count >= maxRegionCount)
                         return textureAtlas;
                 }
+            }
 
             return textureAtlas;
         }

@@ -1,57 +1,97 @@
 ﻿using System;
-using MonoGame.Extended.InputListeners;
+using MonoGame.Extended.TextureAtlases;
 
 namespace MonoGame.Extended.Gui.Controls
 {
     public class GuiButton : GuiControl
     {
-        private bool _isPressed;
-
         public GuiButton()
+            : this(null)
         {
         }
 
+        public GuiButton(TextureRegion2D backgroundRegion)
+            : base(backgroundRegion)
+        {
+        }
+
+        protected override Size2 CalculateDesiredSize(IGuiContext context, Size2 availableSize)
+        {
+            var size = base.CalculateDesiredSize(context, availableSize);
+            return size;
+        }
+
+        public event EventHandler Clicked;
+        public event EventHandler PressedStateChanged;
+
+        private bool _isPressed;
         public bool IsPressed
         {
             get { return _isPressed; }
-            private set
+            set
             {
                 if (_isPressed != value)
                 {
                     _isPressed = value;
-
-                    if (_isPressed)
-                        PressedStyle?.Apply(this);
-                    else
-                        PressedStyle?.Revert(this);
+                    PressedStyle?.ApplyIf(this, _isPressed);
+                    PressedStateChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
 
-        public GuiControlStyle PressedStyle { get; set; }
-
-        public event EventHandler<MouseEventArgs> Click;
-
-        public override void OnMouseDown(object sender, MouseEventArgs args)
+        private GuiControlStyle _pressedStyle;
+        public GuiControlStyle PressedStyle
         {
+            get { return _pressedStyle; }
+            set
+            {
+                if (_pressedStyle != value)
+                {
+                    _pressedStyle = value;
+                    PressedStyle?.ApplyIf(this, _isPressed);
+                }
+            }
+        }
+
+        private bool _isPointerDown;
+
+        public override void OnPointerDown(IGuiContext context, GuiPointerEventArgs args)
+        {
+            base.OnPointerDown(context, args);
+
             if (IsEnabled)
+            {
+                _isPointerDown = true;
                 IsPressed = true;
-
-            base.OnMouseDown(sender, args);
+            }
         }
 
-        public override void OnMouseUp(object sender, MouseEventArgs args)
+        public override void OnPointerUp(IGuiContext context, GuiPointerEventArgs args)
         {
-            if (IsPressed && Contains(args.Position))
-                Click?.Invoke(this, args);
+            base.OnPointerUp(context, args);
 
-            IsPressed = false;
-            base.OnMouseUp(sender, args);
+            _isPointerDown = false;
+
+            if (IsPressed)
+            {
+                IsPressed = false;
+
+                if (BoundingRectangle.Contains(args.Position) && IsEnabled)
+                    Clicked?.Invoke(this, EventArgs.Empty);
+            }
         }
 
-        public override void OnMouseLeave(object sender, MouseEventArgs args)
+        public override void OnPointerEnter(IGuiContext context, GuiPointerEventArgs args)
         {
-            base.OnMouseLeave(sender, args);
+            base.OnPointerEnter(context, args);
+
+            if (IsEnabled && _isPointerDown)
+                IsPressed = true;
+        }
+
+        public override void OnPointerLeave(IGuiContext context, GuiPointerEventArgs args)
+        {
+            base.OnPointerLeave(context, args);
 
             if (IsEnabled)
                 IsPressed = false;

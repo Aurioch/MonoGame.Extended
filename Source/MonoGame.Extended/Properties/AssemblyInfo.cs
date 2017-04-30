@@ -16,6 +16,9 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyCulture("")]
 [assembly: NeutralResourcesLanguage("en")]
 [assembly: InternalsVisibleTo("MonoGame.Extended.Tests")]
+[assembly: InternalsVisibleTo("MonoGame.Extended.Graphics")]
+[assembly: InternalsVisibleTo("MonoGame.Extended.Tiled")]
+[assembly: InternalsVisibleTo("MonoGame.Extended")]
 
 // Version information for an assembly consists of the following four values:
 //
