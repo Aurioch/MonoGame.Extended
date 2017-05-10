@@ -42,6 +42,8 @@
     <Compile Include="Collections\KeyedCollection.cs" />
     <Compile Include="FloatHelper.cs" />
     <Compile Include="IRectangular.cs" />
+    <Compile Include="Screens\Screen.cs" />
+    <Compile Include="Screens\ScreenManagerComponent.cs" />
     <Compile Include="Serialization\NinePatchRegion2DJsonConverter.cs" />
     <Compile Include="Serialization\ThicknessJsonConverter.cs" />
     <Compile Include="Sprites\ISpriteBatchDrawable.cs" />
@@ -75,8 +77,8 @@
     <Compile Include="SimpleGameComponent.cs" />
     <Compile Include="Collections\ObservableCollection.cs" />
     <Compile Include="Vector2Extensions.cs" />
-    <Compile Include="Screens\Screen.cs" />
-    <Compile Include="Screens\ScreenGameComponent.cs" />
+    <Compile Include="Screens\Old\Screen.cs" />
+    <Compile Include="Screens\Old\ScreenGameComponent.cs" />
     <Compile Include="Serialization\ColorJsonConverter.cs" />
     <Compile Include="Serialization\Vector2JsonConverter.cs" />
     <Compile Include="Serialization\Size2JsonConverter.cs" />

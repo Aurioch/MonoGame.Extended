@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 
-namespace MonoGame.Extended.Screens
+namespace MonoGame.Extended.Screens.Old
 {
     public interface IScreenManager
     {
